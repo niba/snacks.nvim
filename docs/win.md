@@ -55,7 +55,7 @@ Snacks.win({
 ---@field row? number|fun(self:snacks.win):number Row of the window. Use <1 for relative row. (default: center)
 ---@field minimal? boolean Disable a bunch of options to make the window minimal (default: true)
 ---@field position? "float"|"bottom"|"top"|"left"|"right"
----@field border? "none"|"top"|"right"|"bottom"|"left"|"rounded"|"single"|"double"|"solid"|"shadow"|string[]|false
+---@field border? "none"|"top"|"right"|"bottom"|"left"|"hpad"|"vpad"|"rounded"|"single"|"double"|"solid"|"shadow"|string[]|false
 ---@field buf? number If set, use this buffer instead of creating a new one
 ---@field file? string If set, use this file instead of creating a new buffer
 ---@field enter? boolean Enter the window after opening (default: false)
@@ -141,6 +141,17 @@ docs for more information on how to customize these styles
 ## 📚 Types
 
 ```lua
+---@class snacks.win.Event.callback.args
+---@field id number
+---@field event string
+---@field group number?
+---@field match string
+---@field buf number
+---@field file string
+---@field data any
+```
+
+```lua
 ---@class snacks.win.Keys: vim.api.keyset.keymap
 ---@field [1]? string
 ---@field [2]? string|string[]|fun(self: snacks.win): string?
@@ -151,7 +162,7 @@ docs for more information on how to customize these styles
 ---@class snacks.win.Event: vim.api.keyset.create_autocmd
 ---@field buf? true
 ---@field win? true
----@field callback? fun(self: snacks.win)
+---@field callback? fun(self: snacks.win, ev: snacks.win.Event.callback.args)
 ```
 
 ```lua
@@ -185,6 +196,7 @@ docs for more information on how to customize these styles
 ---@class snacks.win
 ---@field id number
 ---@field buf? number
+---@field scratch_buf? number
 ---@field win? number
 ---@field opts snacks.win.Config
 ---@field augroup? number
@@ -255,6 +267,13 @@ win:close(opts)
 ```lua
 ---@param parent? snacks.win.Dim
 win:dim(parent)
+```
+
+### `win:execute()`
+
+```lua
+---@param actions string|string[]
+win:execute(actions)
 ```
 
 ### `win:focus()`
