@@ -1,0 +1,186 @@
+---@class snacks.picker.Preview
+---@field item? snacks.picker.Item
+---@field win snacks.win
+---@field previewer snacks.picker.Previewer
+---@field state table<string, any>
+local M = {}
+M.__index = M
+
+---@class snacks.picker.preview.ctx
+---@field picker snacks.Picker
+---@field item snacks.picker.Item
+---@field prev? snacks.picker.Item
+---@field preview snacks.picker.Preview
+---@field buf number
+---@field win number
+
+local ns = vim.api.nvim_create_namespace("snacks.picker.preview")
+local ns_loc = vim.api.nvim_create_namespace("snacks.picker.preview.loc")
+
+---@param opts snacks.picker.Config
+function M.new(opts)
+  local self = setmetatable({}, M)
+  self.win = Snacks.win(Snacks.win.resolve(
+    {
+      title_pos = "center",
+    },
+    opts.win.preview,
+    {
+      show = false,
+      fixbuf = false,
+      wo = {
+        winhighlight = Snacks.picker.config.winhl("SnacksPickerPreview"),
+      },
+    }
+  ))
+  self.state = {}
+
+  self.win:on("WinClosed", function()
+    self:clear(self.win.buf)
+  end, { win = true })
+
+  local previewer = opts.previewer or Snacks.picker.preview.file
+  previewer = type(previewer) == "string" and Snacks.picker.preview[previewer] or previewer
+  ---@cast previewer snacks.picker.Previewer
+  self.previewer = previewer
+  return self
+end
+
+---@param picker snacks.Picker
+function M:preview(picker)
+  local item = picker:current()
+  local prev = self.item
+  self.item = item
+  if item then
+    local buf = self.win.buf
+    self.previewer(setmetatable({
+      preview = self,
+      item = item,
+      prev = prev,
+      picker = picker,
+    }, {
+      __index = function(_, k)
+        if k == "buf" then
+          return self.win.buf
+        elseif k == "win" then
+          return self.win.win
+        end
+      end,
+    }))
+    if self.win.buf ~= buf then
+      self:clear(buf)
+    end
+  else
+    self:reset()
+  end
+end
+
+---@param title string
+function M:set_title(title)
+  if not self.win:valid() then
+    return
+  end
+  if title ~= "" then
+    title = " " .. title .. " "
+  end
+  vim.api.nvim_win_set_config(self.win.win, {
+    title = title,
+    title_pos = self.win.opts.title_pos or "center",
+  })
+end
+
+---@param buf? number
+function M:clear(buf)
+  if not (buf and vim.api.nvim_buf_is_valid(buf)) then
+    return
+  end
+  vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+  vim.api.nvim_buf_clear_namespace(buf, ns_loc, 0, -1)
+end
+
+function M:reset()
+  if vim.api.nvim_buf_is_valid(self.win.scratch_buf) then
+    vim.api.nvim_win_set_buf(self.win.win, self.win.scratch_buf)
+  else
+    self.win:open_buf()
+  end
+  self:set_title("")
+  vim.treesitter.stop(self.win.buf)
+  vim.bo[self.win.buf].modifiable = true
+  vim.api.nvim_buf_set_lines(self.win.buf, 0, -1, false, {})
+  self:clear(self.win.buf)
+  vim.bo[self.win.buf].filetype = ""
+  vim.bo[self.win.buf].syntax = ""
+  vim.wo[self.win.win].cursorline = false
+end
+
+-- create a new scratch buffer
+function M:scratch()
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].bufhidden = "wipe"
+  vim.api.nvim_win_set_buf(self.win.win, buf)
+  return buf
+end
+
+--- highlight the buffer
+---@param opts? {file?:string, buf?:number, ft?:string, lang?:string}
+function M:highlight(opts)
+  opts = opts or {}
+  local ft = opts.ft
+  if not ft and (opts.file or opts.buf) then
+    ft = vim.filetype.match({
+      buf = opts.buf or self.win.buf,
+      filename = opts.file,
+    })
+  end
+  local lang = opts.lang or ft and vim.treesitter.language.get_lang(ft)
+  if not (lang and pcall(vim.treesitter.start, self.win.buf, lang)) then
+    if ft then
+      vim.bo[self.win.buf].syntax = ft
+    end
+  end
+end
+
+-- show the item location
+function M:loc()
+  vim.api.nvim_buf_clear_namespace(self.win.buf, ns_loc, 0, -1)
+  if not self.item then
+    return
+  end
+  local line_count = vim.api.nvim_buf_line_count(self.win.buf)
+  if self.item.pos and self.item.pos[1] > 0 and self.item.pos[1] <= line_count then
+    vim.api.nvim_win_set_cursor(self.win.win, { self.item.pos[1], 0 })
+    vim.api.nvim_win_call(self.win.win, function()
+      vim.cmd("norm! zz")
+      vim.wo[self.win.win].cursorline = true
+    end)
+    if self.item.end_pos then
+      vim.api.nvim_buf_set_extmark(self.win.buf, ns_loc, self.item.pos[1] - 1, self.item.pos[2] - 1, {
+        end_row = self.item.end_pos[1] - 1,
+        end_col = self.item.end_pos[2] - 1,
+        hl_group = "SnacksPickerSearch",
+      })
+    end
+  elseif self.item.search then
+    vim.api.nvim_win_call(self.win.win, function()
+      vim.cmd("keepjumps norm! gg")
+      if pcall(vim.cmd, self.item.search) then
+        vim.cmd("norm! zz")
+        vim.wo[self.win.win].cursorline = true
+      end
+    end)
+  end
+end
+
+---@param msg string
+---@param level "info" | "warn" | "error"
+function M:notify(msg, level)
+  local lines = vim.split(msg, "\n", { plain = true })
+  vim.api.nvim_buf_set_lines(self.win.buf, 0, -1, false, lines)
+  vim.api.nvim_buf_set_extmark(self.win.buf, ns, 0, 0, {
+    hl_group = "Diagnostic" .. level:sub(1, 1):upper() .. level:sub(2),
+    end_row = #lines,
+  })
+end
+
+return M

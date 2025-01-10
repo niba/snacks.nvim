@@ -1,0 +1,267 @@
+local Async = require("snacks.picker.util.async")
+
+local M = {}
+
+---@class snacks.picker
+---@field lsp_definitions? fun(opts?: snacks.picker.lsp.Config):snacks.Picker
+---@field lsp_implementations? fun(opts?: snacks.picker.lsp.Config):snacks.Picker
+---@field lsp_declarations? fun(opts?: snacks.picker.lsp.Config):snacks.Picker
+---@field lsp_type_definitions? fun(opts?: snacks.picker.lsp.Config):snacks.Picker
+---@field lsp_references? fun(opts?: snacks.picker.lsp.references.Config):snacks.Picker
+---@field lsp_symbols? fun(opts?: snacks.picker.lsp.symbols.Config):snacks.Picker
+
+---@alias lsp.Symbol lsp.SymbolInformation|lsp.DocumentSymbol
+---@alias lsp.Loc lsp.Location|lsp.LocationLink
+
+local kinds = nil ---@type table<lsp.SymbolKind, string>
+
+--- Gets the original symbol kind name from its number.
+--- Some plugins override the symbol kind names, so this function is needed to get the original name.
+---@param kind lsp.SymbolKind
+---@return string
+function M.symbol_kind(kind)
+  if not kinds then
+    kinds = {}
+    for k, v in pairs(vim.lsp.protocol.SymbolKind) do
+      if type(v) == "number" then
+        kinds[v] = k
+      end
+    end
+  end
+  return kinds[kind]
+end
+
+---@param buf number
+---@param method string
+---@return vim.lsp.Client[]
+function M.get_clients(buf, method)
+  ---@param client vim.lsp.Client
+  return vim.tbl_filter(function(client)
+    return client.supports_method(method, { bufnr = buf })
+  end, (vim.lsp.get_clients or vim.lsp.get_active_clients)({ bufnr = buf }))
+end
+
+---@param buf number
+---@param method string
+---@param params fun(client:vim.lsp.Client):table
+---@param cb fun(client:vim.lsp.Client, result:table, params:table)
+---@async
+function M.request(buf, method, params, cb)
+  local async = Async.running()
+  local cancel = {} ---@type fun()[]
+
+  async:on("abort", function()
+    for _, c in ipairs(cancel) do
+      c()
+    end
+  end)
+  local req_t = vim.uv.hrtime()
+
+  vim.schedule(function()
+    Snacks.picker.current:debug("request_start")
+    Snacks.picker.current:debug("request_scheduled", req_t)
+    local clients = M.get_clients(buf, method)
+    local remaining = #clients
+    for _, client in ipairs(clients) do
+      local p = params(client)
+      local status, request_id = client.request(method, p, function(_, result)
+        Snacks.picker.current:debug("request_end", req_t)
+        if result then
+          cb(client, result, p)
+        end
+        remaining = remaining - 1
+        if remaining == 0 then
+          async:resume()
+        end
+      end)
+      if status and request_id then
+        table.insert(cancel, function()
+          client.cancel_request(request_id)
+        end)
+      end
+    end
+  end)
+
+  async:suspend()
+end
+
+---@param method string
+---@param opts snacks.picker.lsp.Config|{context?:lsp.ReferenceContext}
+function M.get_locations(method, opts)
+  local win = vim.api.nvim_get_current_win()
+  local buf = vim.api.nvim_get_current_buf()
+  local fname = vim.api.nvim_buf_get_name(buf)
+  fname = vim.fs.normalize(fname)
+  local cursor = vim.api.nvim_win_get_cursor(win)
+
+  ---@async
+  ---@param cb async fun(item: snacks.picker.finder.Item)
+  return function(cb)
+    M.request(buf, method, function(client)
+      local params = vim.lsp.util.make_position_params(win, client.offset_encoding)
+      params.context = opts.context
+      return params
+    end, function(client, result)
+      local items = vim.lsp.util.locations_to_items(result or {}, client.offset_encoding)
+      if not opts.include_current then
+        ---@param item vim.quickfix.entry
+        items = vim.tbl_filter(function(item)
+          return not (item.filename == fname and item.lnum <= cursor[1] and item.end_lnum >= cursor[1])
+        end, items)
+      end
+      for _, loc in ipairs(items) do
+        ---@type snacks.picker.finder.Item
+        local item = {
+          text = loc.filename .. " " .. loc.text,
+          buf = loc.bufnr,
+          file = loc.filename,
+          pos = { loc.lnum, loc.col },
+          end_pos = { loc.end_lnum, loc.end_col },
+          comment = loc.text,
+        }
+        cb(item)
+      end
+    end)
+  end
+end
+
+---@alias lsp.ResultItem lsp.Symbol|lsp.CallHierarchyItem|{text?:string}
+---@param client vim.lsp.Client
+---@param results lsp.ResultItem[]
+---@param opts? {default_uri?:string, filter?:fun(result:lsp.ResultItem):boolean}
+function M.results_to_items(client, results, opts)
+  opts = opts or {}
+  local items = {} ---@type snacks.picker.finder.Item[]
+  local locs = {} ---@type lsp.Loc[]
+  local processed = {} ---@type table<lsp.ResultItem, {uri:string, loc:lsp.Loc, range?:lsp.Loc}>
+
+  ---@param result lsp.ResultItem
+  local function process(result)
+    local uri = result.location and result.location.uri or result.uri or opts.default_uri
+    local loc = result.location or { range = result.selectionRange or result.range, uri = uri }
+    loc.uri = loc.uri or uri
+    if not loc.uri then
+      assert(loc.uri, "missing uri in result:\n" .. vim.inspect(result))
+    end
+    processed[result] = { uri = uri, loc = loc }
+    if not opts.filter or opts.filter(result) then
+      locs[#locs + 1] = loc
+    end
+    for _, child in ipairs(result.children or {}) do
+      process(child)
+    end
+  end
+
+  for _, result in ipairs(results) do
+    process(result)
+  end
+
+  local loc_items = vim.lsp.util.locations_to_items(locs, client.offset_encoding)
+  local ranges = {} ---@type table<lsp.Loc, vim.quickfix.entry>
+  for _, i in ipairs(loc_items) do
+    local loc = i.user_data ---@type lsp.Loc
+    ranges[loc] = i
+  end
+
+  ---@param result lsp.ResultItem
+  local function add(result)
+    local loc = processed[result].loc
+    local sym = ranges[loc]
+    if sym then
+      ---@type snacks.picker.finder.Item
+      local item = {
+        kind = M.symbol_kind(result.kind),
+        detail = result.detail,
+        name = result.name,
+        text = table.concat({ M.symbol_kind(result.kind), result.name, result.detail }, " "),
+        file = sym.filename,
+        buf = sym.bufnr,
+        pos = { sym.lnum, sym.col },
+        end_pos = { sym.end_lnum, sym.end_col },
+      }
+
+      items[#items + 1] = item
+    end
+    for _, child in ipairs(result.children or {}) do
+      add(child)
+    end
+    result.children = nil
+  end
+
+  for _, result in ipairs(results) do
+    add(result)
+  end
+
+  return items
+end
+
+---@param opts snacks.picker.lsp.symbols.Config
+function M.symbols(opts)
+  local buf = vim.api.nvim_get_current_buf()
+  local ft = vim.bo[buf].filetype
+  local filter = opts.filter[ft]
+  if filter == nil then
+    filter = opts.filter.default
+  end
+  ---@param kind string?
+  local function want(kind)
+    kind = kind or "Unknown"
+    return type(filter) == "boolean" or vim.tbl_contains(filter, kind)
+  end
+
+  ---@async
+  ---@param cb async fun(item: snacks.picker.finder.Item)
+  return function(cb)
+    M.request(buf, "textDocument/documentSymbol", function()
+      return { textDocument = vim.lsp.util.make_text_document_params(buf) }
+    end, function(client, result, params)
+      local items = M.results_to_items(client, result, {
+        default_uri = params.textDocument.uri,
+        filter = function(item)
+          return want(M.symbol_kind(item.kind))
+        end,
+      })
+      for _, sym in ipairs(items) do
+        cb(sym)
+      end
+    end)
+  end
+end
+
+---@param opts snacks.picker.lsp.references.Config
+---@type snacks.picker.finder
+function M.references(opts)
+  opts = opts or {}
+  return M.get_locations(
+    "textDocument/references",
+    vim.tbl_deep_extend("force", opts, {
+      context = { includeDeclaration = opts.include_declaration },
+    })
+  )
+end
+
+---@param opts snacks.picker.lsp.Config
+---@type snacks.picker.finder
+function M.definitions(opts)
+  return M.get_locations("textDocument/definition", opts)
+end
+
+---@param opts snacks.picker.lsp.Config
+---@type snacks.picker.finder
+function M.type_definitions(opts)
+  return M.get_locations("textDocument/typeDefinition", opts)
+end
+
+---@param opts snacks.picker.lsp.Config
+---@type snacks.picker.finder
+function M.implementations(opts)
+  return M.get_locations("textDocument/implementation", opts)
+end
+
+---@param opts snacks.picker.lsp.Config
+---@type snacks.picker.finder
+function M.declarations(opts)
+  return M.get_locations("textDocument/declaration", opts)
+end
+
+return M
