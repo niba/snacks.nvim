@@ -1,6 +1,7 @@
 ---@class snacks.win
 ---@field id number
 ---@field buf? number
+---@field scratch_buf? number
 ---@field win? number
 ---@field opts snacks.win.Config
 ---@field augroup? number
@@ -19,6 +20,15 @@ M.meta = {
   desc = "Create and manage floating windows or splits",
 }
 
+---@class snacks.win.Event.callback.args
+---@field id number
+---@field event string
+---@field group number?
+---@field match string
+---@field buf number
+---@field file string
+---@field data any
+
 ---@class snacks.win.Keys: vim.api.keyset.keymap
 ---@field [1]? string
 ---@field [2]? string|string[]|fun(self: snacks.win): string?
@@ -27,7 +37,7 @@ M.meta = {
 ---@class snacks.win.Event: vim.api.keyset.create_autocmd
 ---@field buf? true
 ---@field win? true
----@field callback? fun(self: snacks.win)
+---@field callback? fun(self: snacks.win, ev: snacks.win.Event.callback.args)
 
 ---@class snacks.win.Backdrop
 ---@field bg? string
@@ -61,7 +71,7 @@ M.meta = {
 ---@field row? number|fun(self:snacks.win):number Row of the window. Use <1 for relative row. (default: center)
 ---@field minimal? boolean Disable a bunch of options to make the window minimal (default: true)
 ---@field position? "float"|"bottom"|"top"|"left"|"right"
----@field border? "none"|"top"|"right"|"bottom"|"left"|"rounded"|"single"|"double"|"solid"|"shadow"|string[]|false
+---@field border? "none"|"top"|"right"|"bottom"|"left"|"hpad"|"vpad"|"rounded"|"single"|"double"|"solid"|"shadow"|string[]|false
 ---@field buf? number If set, use this buffer instead of creating a new one
 ---@field file? string If set, use this file instead of creating a new buffer
 ---@field enter? boolean Enter the window after opening (default: false)
@@ -168,10 +178,12 @@ local win_opts = {
 
 ---@type table<string, string[]>
 local borders = {
-  left = { "│", "", "", "", "", "", "│", "│" },
-  right = { "", "", "│", "│", "│", "", "", "" },
-  top = { "─", "─", "─", "", "", "", "", "" },
-  bottom = { "", "", "", "", "─", "─", "─", "" },
+  left = { "", "", "", "", "", "", "", "│" },
+  right = { "", "", "", "│", "", "", "", "" },
+  top = { "", "─", "", "", "", "", "", "" },
+  bottom = { "", "", "", "", "", "─", "", "" },
+  hpad = { "", "", "", " ", "", "", "", " " },
+  vpad = { "", " ", "", "", "", " ", "", "" },
 }
 
 Snacks.util.set_hl({
@@ -244,6 +256,8 @@ function M.new(opts)
         spec = { key, spec, desc = spec }
       elseif type(spec) == "function" then
         spec = { key, spec }
+      elseif type(spec) == "table" and spec[1] and not spec[2] then
+        spec[1], spec[2] = key, spec[1]
       end
       table.insert(self.keys, spec)
     end
@@ -260,6 +274,11 @@ function M.new(opts)
     self:show()
   end
   return self
+end
+
+---@param actions string|string[]
+function M:execute(actions)
+  return self:action(actions)()
 end
 
 ---@param actions string|string[]
@@ -318,8 +337,8 @@ function M:_on(event, opts)
     end
   end
   event_opts.group = event_opts.group or self.augroup
-  event_opts.callback = function()
-    opts.callback(self)
+  event_opts.callback = function(ev)
+    opts.callback(self, ev)
   end
   if event_opts.pattern or event_opts.buffer then
     -- don't alter the pattern or buffer
@@ -347,7 +366,7 @@ end
 
 ---@param up? boolean
 function M:scroll(up)
-  vim.api.nvim_buf_call(self.buf, function()
+  vim.api.nvim_win_call(self.win, function()
     vim.cmd(("normal! %s"):format(up and SCROLL_UP or SCROLL_DOWN))
   end)
 end
@@ -355,7 +374,7 @@ end
 ---@param opts? { buf: boolean }
 function M:close(opts)
   opts = opts or {}
-  local wipe = opts.buf ~= false and not self.opts.buf and not self.opts.file
+  local wipe = opts.buf ~= false and self.buf == self.scratch_buf
 
   local win = self.win
   local buf = wipe and self.buf
@@ -412,6 +431,9 @@ function M:open_buf()
   if self.buf and vim.api.nvim_buf_is_valid(self.buf) then
     -- keep existing buffer
     self.buf = self.buf
+  elseif self.scratch_buf and vim.api.nvim_buf_is_valid(self.scratch_buf) then
+    -- keep existing scratch buffer
+    self.buf = self.scratch_buf
   elseif self.opts.file then
     self.buf = vim.fn.bufadd(self.opts.file)
     if not vim.api.nvim_buf_is_loaded(self.buf) then
@@ -424,6 +446,7 @@ function M:open_buf()
     self.buf = self.opts.buf
   else
     self.buf = vim.api.nvim_create_buf(false, true)
+    self.scratch_buf = self.buf
     local text = type(self.opts.text) == "function" and self.opts.text() or self.opts.text
     text = type(text) == "string" and { text } or text
     if text then
@@ -805,14 +828,36 @@ end
 
 --- Calculate the size of the border
 function M:border_size()
-  local border = self.opts.border and self.opts.border ~= "" and self.opts.border ~= "none" and self.opts.border
-  local full = border and not vim.tbl_contains({ "top", "right", "bottom", "left" }, border)
+  -- The array specifies the eight
+  -- chars building up the border in a clockwise fashion
+  -- starting with the top-left corner.
+  -- { "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" }
+  local border = self:has_border() and self.opts.border or { "" }
+  border = type(border) == "string" and borders[border] or border
+  border = type(border) == "string" and { "x" } or border
+  assert(type(border) == "table", "Invalid border type")
+  ---@cast border string[]
+  while #border < 8 do
+    vim.list_extend(border, border)
+  end
+  -- remove border hl groups
+  border = vim.tbl_map(function(b)
+    return type(b) == "table" and b[1] or b
+  end, border)
+  local function size(from, to)
+    for i = from, to do
+      if border[i] ~= "" then
+        return 1
+      end
+    end
+    return 0
+  end
   ---@type { top: number, right: number, bottom: number, left: number }
   return {
-    top = (full or border == "top") and 1 or 0,
-    right = (full or border == "right") and 1 or 0,
-    bottom = (full or border == "bottom") and 1 or 0,
-    left = (full or border == "left") and 1 or 0,
+    top = size(1, 3),
+    right = size(3, 5),
+    bottom = size(5, 7),
+    left = math.max(size(7, 8), size(1, 1)),
   }
 end
 
