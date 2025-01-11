@@ -9,12 +9,6 @@ local uv = vim.uv or vim.loop
 ---@param opts snacks.picker.grep.Config
 ---@param filter snacks.picker.Filter
 local function get_cmd(opts, filter)
-  opts = vim.tbl_deep_extend("force", {
-    hidden = true,
-    ignored = false,
-    follow = false,
-  }, opts or {}) --[[@as snacks.picker.grep.Config]]
-
   local cmd = "rg"
   local args = {
     "--color=never",
