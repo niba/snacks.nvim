@@ -1,8 +1,8 @@
 ---@module 'luassert'
 
-local TopK = require("snacks.picker.util.topk")
+local MinHeap = require("snacks.picker.util.minheap")
 
-describe("TopK", function()
+describe("MinHeap", function()
   local values = {} ---@type number[]
   for i = 1, 2000 do
     values[i] = i
@@ -18,7 +18,7 @@ describe("TopK", function()
 
   for _ = 1, 100 do
     it("should push and pop values correctly", function()
-      local topk = TopK.new({ capacity = 10 })
+      local topk = MinHeap.new({ capacity = 10 })
       for _, v in ipairs(shuffle(values)) do
         topk:add(v)
       end

@@ -7,7 +7,7 @@
 ---@field dirty boolean
 ---@field state snacks.picker.list.State
 ---@field paused boolean
----@field topk snacks.picker.topk
+---@field topk snacks.picker.MinHeap
 ---@field _current? snacks.picker.Item
 ---@field did_preview? boolean
 ---@field reverse? boolean
@@ -55,7 +55,7 @@ function M.new(picker)
   self.items = {}
   self.state = { height = 0, scrolloff = 0, scroll = 0, mousescroll = 1 }
   self.dirty = true
-  self.topk = require("snacks.picker.util.topk").new({
+  self.topk = require("snacks.picker.util.minheap").new({
     capacity = 1000,
     cmp = self.picker.sorter,
   })
@@ -222,7 +222,7 @@ end
 ---@param idx number
 ---@return snacks.picker.Item?
 function M:get(idx)
-  return self.topk.data[idx] or self.items[idx] or self.picker.finder.items[idx]
+  return self.topk:get(idx) or self.items[idx] or self.picker.finder.items[idx]
 end
 
 function M:height()
@@ -344,8 +344,7 @@ function M:format(item)
     end
   end
   local str = table.concat(parts, ""):gsub("\n", " ")
-
-  local _, positions = self.picker.matcher:match({ text = str, idx = 1, score = 0 }, {
+  local _, positions = self.picker.matcher:match({ text = str:gsub("%s*$", ""), idx = 1, score = 0 }, {
     positions = true,
     force = true,
   })

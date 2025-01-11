@@ -350,7 +350,7 @@ function M:filter(pattern)
 
   local prios = {} ---@type snacks.picker.Item[]
   -- add current topk items to be checked first
-  vim.list_extend(prios, self.list.topk.data)
+  vim.list_extend(prios, self.list.topk:get())
   if not self.matcher:empty() then
     -- next add the rest of the matched items
     vim.list_extend(prios, self.list.items, 1, 1000)
