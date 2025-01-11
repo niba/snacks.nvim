@@ -1,5 +1,11 @@
 ---@class snacks.layout
+---@field opts snacks.layout.Config
+---@field win snacks.win
+---@field wins table<string, snacks.win|{enabled?:boolean}>
+---@field box_wins snacks.win[]
+---@field win_opts table<string, snacks.win.Config>
 local M = {}
+M.__index = M
 
 M.meta = {
   desc = "Window layouts",
@@ -42,18 +48,9 @@ local defaults = {
   },
 }
 
----@class snacks.layout.Layout
----@field opts snacks.layout.Config
----@field win snacks.win
----@field wins table<string, snacks.win|{enabled?:boolean}>
----@field box_wins snacks.win[]
----@field win_opts table<string, snacks.win.Config>
-local Layout = {}
-Layout.__index = Layout
-
 ---@param opts snacks.layout.Config
-function Layout.new(opts)
-  local self = setmetatable({}, Layout)
+function M.new(opts)
+  local self = setmetatable({}, M)
   self.opts = opts
   self.win_opts = {}
   self.wins = self.opts.wins or {}
@@ -107,7 +104,7 @@ end
 
 ---@param cb fun(widget: snacks.layout.Widget)
 ---@param opts? {wins?:boolean, boxes?:boolean}
-function Layout:each(cb, opts)
+function M:each(cb, opts)
   opts = opts or {}
   local stack = { self.opts.layout }
   while #stack > 0 do
@@ -128,7 +125,8 @@ function Layout:each(cb, opts)
   end
 end
 
-function Layout:update()
+---@private
+function M:update()
   local parent = self.win:dim()
   ---@cast parent snacks.layout.Dim
   parent.col, parent.row = 0, 0
@@ -138,7 +136,8 @@ end
 
 ---@param box snacks.layout.Box
 ---@param parent snacks.layout.Dim
-function Layout:update_box(box, parent)
+---@private
+function M:update_box(box, parent)
   local size_main = box.box == "horizontal" and "width" or "height"
   local pos_main = box.box == "horizontal" and "col" or "row"
   box.col = box.col or 0
@@ -200,7 +199,8 @@ end
 
 ---@param widget snacks.layout.Widget
 ---@param ret? snacks.win[]
-function Layout:get_wins(widget, ret)
+---@private
+function M:get_wins(widget, ret)
   ret = ret or {}
   if widget.box then
     for _, child in ipairs(widget) do
@@ -217,7 +217,8 @@ end
 
 ---@param widget snacks.layout.Widget
 ---@param parent snacks.layout.Dim
-function Layout:resolve(widget, parent)
+---@private
+function M:resolve(widget, parent)
   if widget.box then
     ---@cast widget snacks.layout.Box
     return self:update_box(widget, parent)
@@ -230,7 +231,8 @@ end
 
 ---@param widget snacks.layout.Box
 ---@param parent snacks.layout.Dim
-function Layout:dim_box(widget, parent)
+---@private
+function M:dim_box(widget, parent)
   local opts = vim.deepcopy(widget) --[[@as snacks.win.Config]]
   -- adjust max width / height
   opts.max_width = math.min(parent.width, opts.max_width or parent.width)
@@ -244,7 +246,8 @@ end
 
 ---@param win snacks.layout.Win
 ---@param parent snacks.layout.Dim
-function Layout:update_win(win, parent)
+---@private
+function M:update_win(win, parent)
   local w = self.wins[win.win]
   w.enabled = true
   assert(w, ("win %s not part of layout"):format(win.win))
@@ -280,7 +283,7 @@ function Layout:update_win(win, parent)
   return dim
 end
 
-function Layout:close()
+function M:close()
   for _, win in pairs(self.wins) do
     win:close()
   end
@@ -290,11 +293,11 @@ function Layout:close()
   self.win:close()
 end
 
-function Layout:valid()
+function M:valid()
   return self.win:valid()
 end
 
-function Layout:show()
+function M:show()
   if self:valid() then
     return
   end
@@ -311,7 +314,5 @@ function Layout:show()
     win:update()
   end
 end
-
-M.new = Layout.new
 
 return M
