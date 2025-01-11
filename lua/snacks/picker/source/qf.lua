@@ -23,6 +23,7 @@ local M = {}
 
 ---@class snacks.picker.qf.Config
 ---@field qf_win? number
+---@field filter? snacks.picker.filter.Config
 
 local severities = {
   E = vim.diagnostic.severity.ERROR,
@@ -34,7 +35,7 @@ local severities = {
 
 ---@param opts snacks.picker.qf.Config
 ---@type snacks.picker.finder
-function M.qf(opts)
+function M.qf(opts, filter)
   local win = opts.qf_win
   win = win == 0 and vim.api.nvim_get_current_win() or win
 
@@ -67,7 +68,7 @@ function M.qf(opts)
       ret[#ret].item.line = ret[#ret].item.line .. "\n" .. item.text
     end
   end
-  return ret
+  return filter:filter(ret)
 end
 
 return M

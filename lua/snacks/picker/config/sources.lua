@@ -371,13 +371,6 @@ M.pickers = {
 M.projects = {
   finder = "recent_projects",
   format = "file",
-  filter = {
-    paths = {
-      [vim.fn.stdpath("data")] = false,
-      [vim.fn.stdpath("cache")] = false,
-      [vim.fn.stdpath("state")] = false,
-    },
-  },
   actions = {
     confirm = "load_session",
   },
