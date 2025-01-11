@@ -160,14 +160,12 @@ end
 function M.lines(item)
   local ret = {} ---@type snacks.picker.Highlights
   local line_count = vim.api.nvim_buf_line_count(item.buf)
-  local offset = #tostring(line_count)
-  local idx = tostring(item.idx)
-  idx = (" "):rep(offset - #idx) .. idx
+  local idx = Snacks.picker.util.align(tostring(item.idx), #tostring(line_count), "right")
   ret[#ret + 1] = { idx, "LineNr", virtual = true }
   ret[#ret + 1] = { "  ", virtual = true }
   ret[#ret + 1] = { item.text }
 
-  offset = offset + 2
+  local offset = #idx + 2
 
   for _, extmark in ipairs(item.highlights or {}) do
     extmark = vim.deepcopy(extmark)

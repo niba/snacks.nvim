@@ -328,7 +328,13 @@ function M:format(item)
       end
       col = col + #parts[#parts]
     else
+      text = vim.deepcopy(text)
       ---@cast text snacks.picker.Extmark
+      -- fix extmark col and end_col
+      text.col = text.col + selw
+      if text.end_col then
+        text.end_col = text.end_col + selw
+      end
       table.insert(ret, text)
     end
   end
