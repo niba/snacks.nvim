@@ -206,7 +206,10 @@ end
 function M.man(ctx)
   local buf = ctx.preview:scratch()
   vim.api.nvim_buf_call(buf, function()
-    require("man").read_page(ctx.item.ref)
+    local ok, err = pcall(require("man").read_page, ctx.item.ref)
+    if not ok then
+      ctx.preview:notify(("Could not display man page `%s`:\n%s"):format(ctx.item.ref, err or "error"), "error")
+    end
   end)
 end
 
