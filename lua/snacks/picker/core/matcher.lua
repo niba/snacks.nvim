@@ -349,7 +349,7 @@ end
 ---@param len number
 function M.score(from, to, len)
   return 1000 / (to - from + 1) -- calculate compactness score (distance between first and last match)
-    -- + (100 / from) -- add bonus for early match
+    + (100 / from) -- add bonus for early match
     + (100 / (len + 1)) -- add bonus for string length
 end
 
