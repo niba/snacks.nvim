@@ -3,6 +3,7 @@ local Async = require("snacks.picker.util.async")
 ---@class snacks.picker.Matcher
 ---@field opts snacks.picker.matcher.Config
 ---@field mods snacks.picker.matcher.Mods[][]
+---@field one? snacks.picker.matcher.Mods
 ---@field pattern string
 ---@field min_score number
 ---@field tick number
@@ -124,6 +125,7 @@ function M:init(opts)
   self.min_score = 0
   self.pattern = pattern
   self:abort()
+  self.one = nil
   self.live = opts.live
   if pattern == "" then
     return
@@ -154,6 +156,9 @@ function M:init(opts)
   table.sort(self.mods, function(a, b)
     return a[1].entropy > b[1].entropy
   end)
+  if #self.mods == 1 and #self.mods[1] == 1 then
+    self.one = self.mods[1][1]
+  end
 end
 
 ---@param pattern string
@@ -229,6 +234,10 @@ function M:match(item, opts)
   end
   local score = 0
   local positions = opts.positions and {} or nil ---@type number[]?
+  if self.one then
+    score = self:_match(item, self.one, positions) or 0
+    return score, positions
+  end
   for _, ors in ipairs(self.mods) do
     local s = 0 ---@type number?
     local p = opts.positions and {} or nil ---@type number[]?
@@ -399,12 +408,6 @@ function M:fuzzy(str, pattern, best_positions)
     return best_score
   end
 
-  -- early exit if the score is already below the minimum
-  -- FIXME: this is not correct, since better score can be found in backward scan
-  -- if best_score <= self.min_score then
-  --   return { positions = best_positions, score = best_score }
-  -- end
-
   -- find all last positions
   local last_positions = M.clear(fuzzy_last_positions)
   last_positions[1] = best_positions[m]
@@ -422,6 +425,7 @@ function M:fuzzy(str, pattern, best_positions)
 
   -- backward scan from last positions to refine the match
   local positions = M.clear(fuzzy_positions)
+  local best = best_positions
   for _, last in ipairs(last_positions) do
     p = m - 1 -- Start from the second last character of the pattern
     positions[m] = last
@@ -440,8 +444,12 @@ function M:fuzzy(str, pattern, best_positions)
     end
     if score > best_score then
       best_score = score
-      table.move(positions, 1, m, 1, best_positions)
+      positions, best = best, positions
     end
+  end
+
+  if best ~= best_positions then
+    table.move(best, 1, m, 1, best_positions)
   end
 
   return best_score
