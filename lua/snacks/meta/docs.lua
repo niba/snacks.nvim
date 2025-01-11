@@ -357,7 +357,8 @@ docs for more information on how to customize these styles
   local hide = #mod_lines == 0 or (#mod_lines == 1 and mod_lines[1]:find("@class"))
 
   if not hide or #info.methods > 0 then
-    add(("## 📦 %s\n"):format(info.modname or "Module"))
+    local title = info.modname and ("`%s`"):format(info.modname) or "Module"
+    add(("## 📦 %s\n"):format(title))
   end
 
   if info.mod and not hide then

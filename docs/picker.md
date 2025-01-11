@@ -76,12 +76,14 @@
         ["/"] = "toggle_focus",
         ["<ScrollWheelDown>"] = "list_scroll_wheel_down",
         ["<ScrollWheelUp>"] = "list_scroll_wheel_up",
-        ["<c-f>"] = { "preview_scroll_down" },
-        ["<c-b>"] = { "preview_scroll_up" },
-        ["<c-v>"] = { "edit_vsplit" },
-        ["<c-s>"] = { "edit_split" },
-        ["<c-j>"] = { "list_down", mode = { "i", "n" } },
-        ["<c-k>"] = { "list_up", mode = { "i", "n" } },
+        ["<c-f>"] = "preview_scroll_down",
+        ["<c-b>"] = "preview_scroll_up",
+        ["<c-v>"] = "edit_vsplit",
+        ["<c-s>"] = "edit_split",
+        ["<c-j>"] = "list_down",
+        ["<c-k>"] = "list_up",
+        ["<c-n>"] = "list_down",
+        ["<c-p>"] = "list_up",
       },
     },
     input = {
@@ -102,6 +104,8 @@
         ["<Up>"] = { "list_up", mode = { "i", "n" } },
         ["<c-j>"] = { "list_down", mode = { "i", "n" } },
         ["<c-k>"] = { "list_up", mode = { "i", "n" } },
+        ["<c-n>"] = { "list_down", mode = { "i", "n" } },
+        ["<c-p>"] = { "list_up", mode = { "i", "n" } },
         ["<c-b>"] = { "preview_scroll_up", mode = { "i", "n" } },
         ["<c-d>"] = { "list_scroll_down", mode = { "i", "n" } },
         ["<c-f>"] = { "preview_scroll_down", mode = { "i", "n" } },
@@ -336,7 +340,7 @@ Snacks.picker.pick(source, opts)
 Snacks.picker.select(...)
 ```
 
-## 📦 snacks.picker.core.picker
+## 📦 `snacks.picker.core.picker`
 
 ```lua
 ---@class snacks.Picker
