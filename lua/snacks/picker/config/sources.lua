@@ -232,6 +232,7 @@ M.loclist = {
 
 ---@class snacks.picker.lsp.Config: snacks.picker.Config
 ---@field include_current? boolean default false
+---@field unique_lines? boolean include only locations with unique lines
 ---@field filter? snacks.picker.filter.Config
 
 -- LSP declarations

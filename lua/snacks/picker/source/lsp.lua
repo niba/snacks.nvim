@@ -134,6 +134,7 @@ function M.get_locations(method, opts, filter)
           return not (item.filename == fname and item.lnum <= cursor[1] and item.end_lnum >= cursor[1])
         end, items)
       end
+      local done = {} ---@type table<string, boolean>
       for _, loc in ipairs(items) do
         ---@type snacks.picker.finder.Item
         local item = {
@@ -144,9 +145,11 @@ function M.get_locations(method, opts, filter)
           end_pos = { loc.end_lnum, loc.end_col },
           comment = loc.text,
         }
-        if filter:match(item) then
+        local loc_key = loc.filename .. ":" .. loc.lnum
+        if filter:match(item) and not (done[loc_key] and opts.unique_lines) then
           ---@diagnostic disable-next-line: await-in-sync
           cb(item)
+          done[loc_key] = true
         end
       end
     end)
