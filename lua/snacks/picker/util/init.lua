@@ -1,12 +1,14 @@
 ---@class snacks.picker.util
 local M = {}
 
+local uv = vim.uv or vim.loop
+
 ---@param item snacks.picker.Item
 function M.path(item)
   if not (item and item.file) then
     return
   end
-  return vim.fs.normalize(item.cwd and item.cwd .. "/" .. item.file or item.file)
+  return vim.fs.normalize(item.cwd and item.cwd .. "/" .. item.file or item.file, { _fast = true, expand_env = false })
 end
 
 ---@param item table<string, any>

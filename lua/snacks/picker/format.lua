@@ -52,6 +52,7 @@ function M.filename(item)
       table.insert(ret, { tostring(item.pos[2]), "SnacksPickerCol" })
     end
   end
+  ret[#ret + 1] = { " " }
   return ret
 end
 
@@ -71,13 +72,13 @@ function M.file(item, picker)
   vim.list_extend(ret, M.filename(item))
 
   if item.comment then
-    table.insert(ret, { " " })
     table.insert(ret, { item.comment, "SnacksPickerComment" })
+    table.insert(ret, { " " })
   end
 
   if item.line then
-    table.insert(ret, { " " })
     Snacks.picker.highlight.format(item, item.line, ret)
+    table.insert(ret, { " " })
   end
   return ret
 end
@@ -197,17 +198,17 @@ function M.diagnostic(item, picker)
 
   ret[#ret + 1] = { diag.message }
   Snacks.picker.highlight.markdown(ret)
+  ret[#ret + 1] = { " " }
 
   if diag.source then
-    ret[#ret + 1] = { " " }
     ret[#ret + 1] = { diag.source, "SnacksPickerDiagnosticSource" }
+    ret[#ret + 1] = { " " }
   end
 
   if diag.code then
-    ret[#ret + 1] = { " " }
     ret[#ret + 1] = { ("(%s)"):format(diag.code), "SnacksPickerDiagnosticCode" }
+    ret[#ret + 1] = { " " }
   end
-
   vim.list_extend(ret, M.filename(item, picker))
   return ret
 end
@@ -311,6 +312,7 @@ function M.keymap(item)
   ret[#ret + 1] = { a(k.desc or "", 20) }
 
   if item.file then
+    ret[#ret + 1] = { " " }
     vim.list_extend(ret, M.filename(item))
   end
   return ret

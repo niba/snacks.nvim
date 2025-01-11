@@ -38,9 +38,7 @@ function M:run(picker)
   self.items = {}
   local yield ---@type fun()
   collectgarbage("stop") -- moar speed
-  local filter = vim.deepcopy(picker.input.filter)
-  filter.pattern = vim.trim(filter.pattern)
-  filter.search = vim.trim(filter.search)
+  local filter = require("snacks.picker.core.filter").new(picker, picker.opts)
   local finder = self._find(picker.opts, filter)
   if type(finder) == "table" then
     local items = finder --[[@as snacks.picker.finder.Item[] ]]

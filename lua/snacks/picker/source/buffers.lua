@@ -5,7 +5,7 @@ local M = {}
 
 ---@param opts snacks.picker.buffers.Config
 ---@type snacks.picker.finder
-function M.buffers(opts)
+function M.buffers(opts, filter)
   local items = {} ---@type snacks.picker.finder.Item[]
   local current_buf = vim.api.nvim_get_current_buf()
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
@@ -31,7 +31,7 @@ function M.buffers(opts)
       return a.info.lastused > b.info.lastused
     end)
   end
-  return items
+  return filter:filter(items)
 end
 
 return M

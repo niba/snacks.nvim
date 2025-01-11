@@ -4,10 +4,6 @@ local Finder = require("snacks.picker.core.finder")
 local uv = vim.uv or vim.loop
 Async.BUDGET = 20
 
----@class snacks.picker.Filter
----@field pattern string Pattern used to filter items by the matcher
----@field search string Initial search string used by finders
-
 ---@class snacks.Picker
 ---@field opts snacks.picker.Config
 ---@field finder snacks.picker.Finder

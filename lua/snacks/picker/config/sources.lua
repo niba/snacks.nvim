@@ -17,6 +17,7 @@ M.autocmds = {
 ---@field current? boolean show current buffer
 ---@field nofile? boolean show `buftype=nofile` buffers
 ---@field sort_lastused? boolean sort by last used
+---@field filter? snacks.picker.filter.Config
 M.buffers = {
   finder = "buffers",
   format = "file",
@@ -76,6 +77,8 @@ M.commands = {
 }
 
 ---@class snacks.picker.diagnostics.Config: snacks.picker.Config
+---@field filter? snacks.picker.filter.Config
+---@field severity? vim.diagnostic.SeverityFilter
 M.diagnostics = {
   finder = "diagnostics",
   format = "diagnostic",
@@ -88,6 +91,18 @@ M.diagnostics = {
       "lnum",
     },
   }),
+  -- only show diagnostics from the cwd by default
+  filter = { cwd = true },
+}
+
+---@type snacks.picker.diagnostics.Config
+M.diagnostics_buffer = {
+  finder = "diagnostics",
+  format = "diagnostic",
+  sorter = Snacks.picker.sorter.default({
+    fields = { "severity", "file", "lnum" },
+  }),
+  filter = { buf = true },
 }
 
 ---@class snacks.picker.files.Config: snacks.picker.proc.Config
@@ -217,6 +232,7 @@ M.loclist = {
 
 ---@class snacks.picker.lsp.Config: snacks.picker.Config
 ---@field include_current? boolean default false
+---@field filter? snacks.picker.filter.Config
 
 -- LSP declarations
 ---@type snacks.picker.lsp.Config
@@ -351,10 +367,17 @@ M.pickers = {
 
 -- Open recent projects
 ---@class snacks.picker.projects.Config: snacks.picker.Config
----@field filter? table<string, boolean>
+---@field filter? snacks.picker.filter.Config
 M.projects = {
   finder = "recent_projects",
   format = "file",
+  filter = {
+    paths = {
+      [vim.fn.stdpath("data")] = false,
+      [vim.fn.stdpath("cache")] = false,
+      [vim.fn.stdpath("state")] = false,
+    },
+  },
   actions = {
     confirm = "load_session",
   },
@@ -374,11 +397,17 @@ M.qflist = {
 
 -- Find recent files
 ---@class snacks.picker.recent.Config: snacks.picker.Config
----@field filter? table<string, boolean>
----@field only_cwd? boolean only show files in the current working directory
+---@field filter? snacks.picker.filter.Config
 M.recent = {
   finder = "recent_files",
   format = "file",
+  filter = {
+    paths = {
+      [vim.fn.stdpath("data")] = false,
+      [vim.fn.stdpath("cache")] = false,
+      [vim.fn.stdpath("state")] = false,
+    },
+  },
 }
 
 -- Neovim registers

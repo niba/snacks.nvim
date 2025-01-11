@@ -31,13 +31,41 @@ function M.symbol_kind(kind)
   return kinds[kind]
 end
 
+--- Neovim 0.11 uses a lua class for clients, while older versions use a table.
+--- Wraps older style clients to be compatible with the new style.
+---@param client vim.lsp.Client
+---@return vim.lsp.Client
+local function wrap(client)
+  if vim.lsp.client then
+    return client
+  end
+  ---@diagnostic disable-next-line: undefined-field
+  if client.wrapped then
+    return client
+  end
+  local methods = { "request", "supports_method", "cancel_request" }
+  -- old style
+  return setmetatable({ wrapped = true }, {
+    __index = function(_, k)
+      if vim.tbl_contains(methods, k) then
+        return function(_, ...)
+          return client[k](...)
+        end
+      end
+      return client[k]
+    end,
+  })
+end
+
 ---@param buf number
 ---@param method string
 ---@return vim.lsp.Client[]
 function M.get_clients(buf, method)
   ---@param client vim.lsp.Client
   return vim.tbl_filter(function(client)
-    return client.supports_method(method, { bufnr = buf })
+    client = wrap(client)
+    return client:supports_method(method, buf)
+    ---@diagnostic disable-next-line: deprecated
   end, (vim.lsp.get_clients or vim.lsp.get_active_clients)({ bufnr = buf }))
 end
 
@@ -55,17 +83,12 @@ function M.request(buf, method, params, cb)
       c()
     end
   end)
-  local req_t = vim.uv.hrtime()
-
   vim.schedule(function()
-    Snacks.picker.current:debug("request_start")
-    Snacks.picker.current:debug("request_scheduled", req_t)
     local clients = M.get_clients(buf, method)
     local remaining = #clients
     for _, client in ipairs(clients) do
       local p = params(client)
-      local status, request_id = client.request(method, p, function(_, result)
-        Snacks.picker.current:debug("request_end", req_t)
+      local status, request_id = client:request(method, p, function(_, result)
         if result then
           cb(client, result, p)
         end
@@ -76,7 +99,7 @@ function M.request(buf, method, params, cb)
       end)
       if status and request_id then
         table.insert(cancel, function()
-          client.cancel_request(request_id)
+          client:cancel_request(request_id)
         end)
       end
     end
@@ -87,7 +110,8 @@ end
 
 ---@param method string
 ---@param opts snacks.picker.lsp.Config|{context?:lsp.ReferenceContext}
-function M.get_locations(method, opts)
+---@param filter snacks.picker.Filter
+function M.get_locations(method, opts, filter)
   local win = vim.api.nvim_get_current_win()
   local buf = vim.api.nvim_get_current_buf()
   local fname = vim.api.nvim_buf_get_name(buf)
@@ -99,6 +123,7 @@ function M.get_locations(method, opts)
   return function(cb)
     M.request(buf, method, function(client)
       local params = vim.lsp.util.make_position_params(win, client.offset_encoding)
+      ---@diagnostic disable-next-line: inject-field
       params.context = opts.context
       return params
     end, function(client, result)
@@ -119,7 +144,10 @@ function M.get_locations(method, opts)
           end_pos = { loc.end_lnum, loc.end_col },
           comment = loc.text,
         }
-        cb(item)
+        if filter:match(item) then
+          ---@diagnostic disable-next-line: await-in-sync
+          cb(item)
+        end
       end
     end)
   end
@@ -222,6 +250,7 @@ function M.symbols(opts)
         end,
       })
       for _, sym in ipairs(items) do
+        ---@diagnostic disable-next-line: await-in-sync
         cb(sym)
       end
     end)
@@ -230,38 +259,39 @@ end
 
 ---@param opts snacks.picker.lsp.references.Config
 ---@type snacks.picker.finder
-function M.references(opts)
+function M.references(opts, filter)
   opts = opts or {}
   return M.get_locations(
     "textDocument/references",
     vim.tbl_deep_extend("force", opts, {
       context = { includeDeclaration = opts.include_declaration },
-    })
+    }),
+    filter
   )
 end
 
 ---@param opts snacks.picker.lsp.Config
 ---@type snacks.picker.finder
-function M.definitions(opts)
-  return M.get_locations("textDocument/definition", opts)
+function M.definitions(opts, filter)
+  return M.get_locations("textDocument/definition", opts, filter)
 end
 
 ---@param opts snacks.picker.lsp.Config
 ---@type snacks.picker.finder
-function M.type_definitions(opts)
-  return M.get_locations("textDocument/typeDefinition", opts)
+function M.type_definitions(opts, filter)
+  return M.get_locations("textDocument/typeDefinition", opts, filter)
 end
 
 ---@param opts snacks.picker.lsp.Config
 ---@type snacks.picker.finder
-function M.implementations(opts)
-  return M.get_locations("textDocument/implementation", opts)
+function M.implementations(opts, filter)
+  return M.get_locations("textDocument/implementation", opts, filter)
 end
 
 ---@param opts snacks.picker.lsp.Config
 ---@type snacks.picker.finder
-function M.declarations(opts)
-  return M.get_locations("textDocument/declaration", opts)
+function M.declarations(opts, filter)
+  return M.get_locations("textDocument/declaration", opts, filter)
 end
 
 return M

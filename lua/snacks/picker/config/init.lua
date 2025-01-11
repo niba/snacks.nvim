@@ -11,6 +11,13 @@ local M = {}
 ---@field idx? number
 ---@field score? number
 
+--- Generic filter used by finders to pre-filter items
+---@class snacks.picker.filter.Config
+---@field cwd? boolean|string only show files for the given cwd
+---@field buf? boolean|number only show items for the current or given buffer
+---@field paths? table<string, boolean> only show items that include or exclude the given paths
+---@field filter? fun(item:snacks.picker.finder.Item):boolean custom filter function
+
 ---@class snacks.picker.Item
 ---@field [string] any
 ---@field idx number
