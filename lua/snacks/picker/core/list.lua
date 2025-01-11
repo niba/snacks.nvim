@@ -306,6 +306,11 @@ function M:format(item)
       hl_mode = "combine",
     }
   end
+
+  while #line > 0 and type(line[#line][1]) == "string" and line[#line][1]:find("^%s*$") do
+    table.remove(line)
+  end
+
   local col = selw
   for _, text in ipairs(line) do
     if type(text[1]) == "string" then
