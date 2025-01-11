@@ -36,9 +36,11 @@ function M.resolve(action, picker, name)
   if not action then
     assert(name, "Missing action without name")
     local fn, desc = picker.input.win[name], name
-    assert(fn, "Missing action: " .. name)
     return {
       action = function()
+        if not fn then
+          return name
+        end
         fn(picker.input.win)
       end,
       desc = desc,
