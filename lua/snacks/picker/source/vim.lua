@@ -150,11 +150,15 @@ function M.highlights()
     local defs = {} ---@type {group:string, hl:vim.api.keyset.get_hl_info}[]
     defs[#defs + 1] = { group = group, hl = hl }
     local link = hl.link
-    while link do
+    local done = { [group] = true } ---@type table<string, boolean>
+    while link and not done[link] do
+      done[link] = true
       local hl_link = hls[link]
       if hl_link then
         defs[#defs + 1] = { group = link, hl = hl_link }
         link = hl_link.link
+      else
+        break
       end
     end
     local code = {} ---@type string[]
