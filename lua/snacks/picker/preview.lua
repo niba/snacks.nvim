@@ -4,16 +4,6 @@ local M = {}
 local uv = vim.uv or vim.loop
 local ns = vim.api.nvim_create_namespace("snacks.picker.preview")
 
----@class snacks.picker.preview.Config
----@field file snacks.picker.preview.file.Config
-
----@class snacks.picker.preview.file.Config
----@field max_size? number default 1MB
----@field max_line_length? number defaults to 500
----@field ft? string defaults to auto-detect
-
----@alias snacks.picker.Previewer fun(ctx: snacks.picker.preview.ctx):boolean?
-
 ---@param ctx snacks.picker.preview.ctx
 function M.directory(ctx)
   ctx.preview:reset()
@@ -116,7 +106,9 @@ end
 
 ---@param cmd string[]
 ---@param ctx snacks.picker.preview.ctx
-function M.cmd(cmd, ctx)
+---@param opts? {env?:table<string, string>, pty?:boolean, ft?:string}
+function M.cmd(cmd, ctx, opts)
+  opts = opts or {}
   local buf = ctx.preview:scratch()
   local killed = false
   local chan = vim.api.nvim_open_term(buf, {})
@@ -124,12 +116,12 @@ function M.cmd(cmd, ctx)
   local jid = vim.fn.jobstart(cmd, {
     height = vim.api.nvim_win_get_height(ctx.win),
     width = vim.api.nvim_win_get_width(ctx.win),
-    pty = true,
+    pty = opts.pty ~= false and not opts.ft,
     cwd = ctx.item.cwd,
-    env = {
+    env = vim.tbl_extend("force", {
       PAGER = "cat",
       DELTA_PAGER = "cat",
-    },
+    }, opts.env or {}),
     on_stdout = function(_, data)
       if not vim.api.nvim_buf_is_valid(buf) then
         return
@@ -156,6 +148,9 @@ function M.cmd(cmd, ctx)
       end
     end,
   })
+  if opts.ft then
+    ctx.preview:highlight({ ft = opts.ft })
+  end
   vim.api.nvim_create_autocmd("BufWipeout", {
     buffer = buf,
     callback = function()
@@ -204,13 +199,14 @@ end
 
 ---@param ctx snacks.picker.preview.ctx
 function M.man(ctx)
-  local buf = ctx.preview:scratch()
-  vim.api.nvim_buf_call(buf, function()
-    local ok, err = pcall(require("man").read_page, ctx.item.ref)
-    if not ok then
-      ctx.preview:notify(("Could not display man page `%s`:\n%s"):format(ctx.item.ref, err or "error"), "error")
-    end
-  end)
+  M.cmd({ "man", ctx.item.section, ctx.item.page }, ctx, {
+    ft = "man",
+    env = {
+      MANPAGER = ctx.picker.opts.preview.man_pager or vim.fn.executable("col") == 1 and "col -bx" or "cat",
+      MANWIDTH = tostring(ctx.preview.win:dim().width),
+      MANPATH = vim.env.MANPATH,
+    },
+  })
 end
 
 return M

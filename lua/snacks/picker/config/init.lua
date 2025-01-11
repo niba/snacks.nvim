@@ -6,6 +6,7 @@ local M = {}
 ---@alias snacks.picker.Highlights (snacks.picker.Text|snacks.picker.Extmark)[]
 ---@alias snacks.picker.Formatter fun(item:snacks.picker.Item, picker:snacks.Picker):snacks.picker.Highlights
 ---@alias snacks.matcher.sorter fun(a:snacks.picker.Item, b:snacks.picker.Item):boolean
+---@alias snacks.picker.Previewer fun(ctx: snacks.picker.preview.ctx):boolean?
 
 ---@class snacks.picker.finder.Item: snacks.picker.Item
 ---@field idx? number
@@ -29,6 +30,15 @@ local M = {}
 ---@field highlights? snacks.picker.Highlights[]
 
 ---@class snacks.picker.sources.Config
+
+---@class snacks.picker.preview.Config
+---@field man_pager? string MANPAGER env to use for `man` preview
+---@field file snacks.picker.preview.file.Config
+
+---@class snacks.picker.preview.file.Config
+---@field max_size? number default 1MB
+---@field max_line_length? number defaults to 500
+---@field ft? string defaults to auto-detect
 
 ---@class snacks.picker.list.Config: snacks.win.Config
 ---@field reverse? boolean
