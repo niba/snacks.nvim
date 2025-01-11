@@ -52,7 +52,7 @@ function M.new(picker, opts)
     wo = {
       statuscolumn = self._statuscolumn,
       cursorline = false,
-      winhighlight = Snacks.picker.config.winhl("SnacksPickerInput"),
+      winhighlight = Snacks.picker.highlight.winhl("SnacksPickerInput"),
     },
   }))
 

@@ -47,7 +47,7 @@ function M.new(picker)
       conceallevel = 3,
       concealcursor = "nvc",
       cursorline = false,
-      winhighlight = Snacks.picker.config.winhl("SnacksPickerList", { CursorLine = "Visual" }),
+      winhighlight = Snacks.picker.highlight.winhl("SnacksPickerList", { CursorLine = "Visual" }),
     },
   })
   self.win = Snacks.win(win_opts)

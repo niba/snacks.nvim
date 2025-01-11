@@ -29,7 +29,7 @@ function M.new(opts)
       show = false,
       fixbuf = false,
       wo = {
-        winhighlight = Snacks.picker.config.winhl("SnacksPickerPreview"),
+        winhighlight = Snacks.picker.highlight.winhl("SnacksPickerPreview"),
       },
     }
   ))

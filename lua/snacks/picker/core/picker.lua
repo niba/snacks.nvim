@@ -9,7 +9,7 @@ Async.BUDGET = 20
 ---@field finder snacks.picker.Finder
 ---@field format snacks.picker.Formatter
 ---@field input snacks.picker.input
----@field layout snacks.layout.Layout
+---@field layout snacks.layout
 ---@field list snacks.picker.list
 ---@field matcher snacks.picker.Matcher
 ---@field parent_win number
@@ -43,6 +43,7 @@ M.last = nil
 ---@type string[]
 M.history = {}
 
+---@private
 ---@param opts? snacks.picker.Config
 function M.new(opts)
   local self = setmetatable({}, M)
@@ -89,7 +90,7 @@ function M.new(opts)
   self.layout = Snacks.layout.new(vim.tbl_deep_extend("force", self.opts.layout or {}, {
     win = {
       wo = {
-        winhighlight = Snacks.picker.config.winhl("SnacksPicker"),
+        winhighlight = Snacks.picker.highlight.winhl("SnacksPicker"),
       },
     },
     wins = {
@@ -105,7 +106,7 @@ function M.new(opts)
     filter = self.input.filter,
   }
 
-  local boxwhl = Snacks.picker.config.winhl("SnacksPickerBox")
+  local boxwhl = Snacks.picker.highlight.winhl("SnacksPickerBox")
   self.source_name = Snacks.picker.util.title(self.opts.source or "search")
   local wins = { self.layout.win }
   vim.list_extend(wins, vim.tbl_values(self.layout.wins))
@@ -147,6 +148,7 @@ function M.new(opts)
   return self
 end
 
+---@private
 function M.resume()
   local last = M.last
   if not last then
