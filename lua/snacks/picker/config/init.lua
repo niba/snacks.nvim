@@ -109,6 +109,7 @@ local defaults = {
         ["k"] = "list_up",
         ["/"] = "toggle_focus",
         ["q"] = "close",
+        ["<C-w>"] = { "<c-s-w>", mode = { "i" }, expr = true },
         ["<C-Up>"] = { "history_back", mode = { "i", "n" } },
         ["<C-Down>"] = { "history_forward", mode = { "i", "n" } },
         ["<Tab>"] = { "select_and_next", mode = { "i", "n" } },
