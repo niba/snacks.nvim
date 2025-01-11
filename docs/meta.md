@@ -16,6 +16,7 @@ Meta functions for Snacks
 ---@field health? boolean
 ---@field types? boolean
 ---@field config? boolean
+---@field merge? { [string|number]: string }
 ```
 
 ```lua

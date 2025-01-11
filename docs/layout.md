@@ -73,3 +73,46 @@
 ```
 
 ## 📦 Module
+
+```lua
+---@class snacks.layout
+---@field opts snacks.layout.Config
+---@field win snacks.win
+---@field wins table<string, snacks.win|{enabled?:boolean}>
+---@field box_wins snacks.win[]
+---@field win_opts table<string, snacks.win.Config>
+Snacks.layout = {}
+```
+
+### `Snacks.layout.new()`
+
+```lua
+---@param opts snacks.layout.Config
+Snacks.layout.new(opts)
+```
+
+### `layout:close()`
+
+```lua
+layout:close()
+```
+
+### `layout:each()`
+
+```lua
+---@param cb fun(widget: snacks.layout.Widget)
+---@param opts? {wins?:boolean, boxes?:boolean}
+layout:each(cb, opts)
+```
+
+### `layout:show()`
+
+```lua
+layout:show()
+```
+
+### `layout:valid()`
+
+```lua
+layout:valid()
+```
