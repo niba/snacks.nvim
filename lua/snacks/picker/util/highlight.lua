@@ -47,10 +47,7 @@ function M.get_highlights(opts)
             table.insert(ret[row], {
               col = range[2],
               end_col = range[4],
-              priority = (
-                tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
-                or vim.hl.priorities.treesitter
-              ),
+              priority = (tonumber(metadata.priority or metadata[capture] and metadata[capture].priority) or 100),
               conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal,
               hl_group = "@" .. name .. "." .. lang,
             })
