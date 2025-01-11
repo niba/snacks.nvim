@@ -413,6 +413,9 @@ M.registers = {
   },
 }
 
+-- Special picker that resumes the last picker
+M.resume = {}
+
 -- Neovim search history
 ---@type snacks.picker.history.Config
 M.search_history = {

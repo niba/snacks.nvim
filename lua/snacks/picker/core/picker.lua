@@ -46,9 +46,12 @@ M.history = {}
 ---@param opts? snacks.picker.Config
 function M.new(opts)
   local self = setmetatable({}, M)
+  self.opts = Snacks.picker.config.get(opts)
+  if self.opts.source == "resume" then
+    return M.resume()
+  end
   self.start_time = uv.hrtime()
   Snacks.picker.current = self
-  self.opts = Snacks.picker.config.get(opts)
   self.parent_win = vim.api.nvim_get_current_win()
   local actions = require("snacks.picker.core.actions").get(self)
   self.opts.win.input.actions = actions
@@ -142,6 +145,21 @@ function M.new(opts)
 
   self:find()
   return self
+end
+
+function M.resume()
+  local last = M.last
+  if not last then
+    Snacks.notify.error("No picker to resume")
+    return M.new({ source = "pickers" })
+  end
+  last.opts.pattern = last.filter.pattern
+  last.opts.search = last.filter.search
+  local ret = M.new(last.opts)
+  ret.list:set_selected(last.selected)
+  ret.list:update()
+  ret.input:update()
+  return ret
 end
 
 ---@param name string

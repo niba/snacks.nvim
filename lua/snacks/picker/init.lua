@@ -55,21 +55,6 @@ function M.pick(source, opts)
   return require("snacks.picker.core.picker").new(opts)
 end
 
-function M.resume()
-  local last = require("snacks.picker.core.picker").last
-  if not last then
-    Snacks.notify.error("No picker to resume")
-    return
-  end
-  last.opts.pattern = last.filter.pattern
-  last.opts.search = last.filter.search
-  local ret = M.pick(last.opts)
-  ret.list:set_selected(last.selected)
-  ret.list:update()
-  ret.input:update()
-  return ret
-end
-
 function M.select(...)
   return require("snacks.picker.select").select(...)
 end
