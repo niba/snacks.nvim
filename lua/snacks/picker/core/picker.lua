@@ -218,7 +218,7 @@ function M:close()
   if self.closed then
     return
   end
-  M.last.selected = self:selected()
+  M.last.selected = self:selected({ fallback = false })
   self.closed = true
   Snacks.picker.current = nil
   local current = vim.api.nvim_get_current_win()
