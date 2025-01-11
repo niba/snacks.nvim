@@ -446,6 +446,8 @@ function M:open_buf()
     self.buf = self.opts.buf
   else
     self.buf = vim.api.nvim_create_buf(false, true)
+    vim.bo[self.buf].bufhidden = "wipe"
+    vim.bo[self.buf].swapfile = false
     self.scratch_buf = self.buf
     local text = type(self.opts.text) == "function" and self.opts.text() or self.opts.text
     text = type(text) == "string" and { text } or text
