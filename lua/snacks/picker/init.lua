@@ -31,8 +31,11 @@ local M = setmetatable({}, {
   end,
 })
 
+---@type snacks.meta.Meta
 M.meta = {
   desc = "Picker for selecting items",
+  needs_setup = true,
+  merge = { config = "config.defaults", picker = "core.picker" },
 }
 
 local ui_select = vim.ui.select

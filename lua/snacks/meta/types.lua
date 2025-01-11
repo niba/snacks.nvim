@@ -43,6 +43,7 @@
 ---@field layout? snacks.layout.Config|{}
 ---@field lazygit? snacks.lazygit.Config|{}
 ---@field notifier? snacks.notifier.Config|{}
+---@field picker? snacks.picker.Config|{}
 ---@field profiler? snacks.profiler.Config|{}
 ---@field quickfile? snacks.quickfile.Config|{}
 ---@field scope? snacks.scope.Config|{}

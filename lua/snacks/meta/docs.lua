@@ -56,10 +56,19 @@ local query = vim.treesitter.query.parse(
 ---@field captures snacks.docs.Capture[]
 ---@field comments string[]
 
+---@class snacks.docs.Method
+---@field mod string
+---@field name string
+---@field args string
+---@field comment? string
+---@field types? string
+---@field type "method"|"function"}[]
+
 ---@class snacks.docs.Info
 ---@field config? string
 ---@field mod? string
----@field methods {name: string, args: string, comment?: string, types?: string, type: "method"|"function"}[]
+---@field modname? string
+---@field methods snacks.docs.Method[]
 ---@field types string[]
 ---@field setup? string
 ---@field examples table<string, string>
@@ -131,7 +140,9 @@ function M.parse(lines)
 end
 
 ---@param lines string[]
-function M.extract(lines)
+---@param opts {prefix: string, name:string}
+function M.extract(lines, opts)
+  local fqn = opts.prefix .. "." .. opts.name
   local parse = M.parse(lines)
   ---@type snacks.docs.Info
   local ret = {
@@ -158,13 +169,40 @@ function M.extract(lines)
       local type = name:sub(1, 1)
       name = name:sub(2)
       if not name:find("^_") then
-        table.insert(ret.methods, { name = name, args = args, comment = c.comment, type = type })
+        table.insert(ret.methods, {
+          mod = type == ":" and opts.name or fqn,
+          name = name,
+          args = args,
+          comment = c.comment,
+          type = type,
+        })
       end
     elseif c.name == "style" then
       table.insert(ret.styles, { name = c.fields.name, opts = c.fields.config, comment = c.comment })
     elseif c.name == "example" then
       ret.examples[c.fields.name] = c.comment .. "\n" .. c.fields.config
     end
+  end
+
+  if ret.mod then
+    local mod_lines = vim.split(ret.mod, "\n")
+    mod_lines = vim.tbl_filter(function(line)
+      local overload = line:match("^%-%-%-%s*@overload (.*)(%s*)$") --[[@as string?]]
+      if overload then
+        table.insert(ret.methods, {
+          mod = fqn,
+          name = "",
+          args = "",
+          type = "",
+          comment = "---@type " .. overload,
+        })
+        return false
+      elseif line:find("^%s*$") then
+        return false
+      end
+      return true
+    end, mod_lines)
+    ret.mod = table.concat(mod_lines, "\n")
   end
 
   return ret
@@ -223,13 +261,15 @@ function M.examples(name)
     return {}
   end
   local lines = vim.fn.readfile(fname)
-  local info = M.extract(lines)
+  local info = M.extract(lines, { prefix = "Snacks.examples", name = name })
   return info.examples
 end
 
 ---@param name string
 ---@param info snacks.docs.Info
-function M.render(name, info)
+---@param opts? {setup?:boolean, config?:boolean, styles?:boolean, types?:boolean, prefix?:string}
+function M.render(name, info, opts)
+  opts = opts or {}
   local lines = {} ---@type string[]
   local function add(line)
     table.insert(lines, line)
@@ -239,8 +279,11 @@ function M.render(name, info)
   if name == "init" then
     prefix = "Snacks"
   end
+  if info.modname then
+    prefix = "local M"
+  end
 
-  if name ~= "init" and (info.config or info.setup) then
+  if name ~= "init" and (info.config or info.setup) and opts.setup ~= false then
     add("## 📦 Setup\n")
     add(([[
 ```lua
@@ -260,7 +303,7 @@ function M.render(name, info)
 ]]):format(info.setup or name, name))
   end
 
-  if info.config then
+  if info.config and opts.config ~= false then
     add("## ⚙️ Config\n")
     add(M.md(info.config))
   end
@@ -277,7 +320,7 @@ function M.render(name, info)
     end
   end
 
-  if #info.styles > 0 then
+  if #info.styles > 0 and opts.styles ~= false then
     table.sort(info.styles, function(a, b)
       return a.name < b.name
     end)
@@ -303,57 +346,43 @@ docs for more information on how to customize these styles
     end
   end
 
-  if #info.types > 0 then
+  if #info.types > 0 and opts.types ~= false then
     add("## 📚 Types\n")
     for _, t in ipairs(info.types) do
       add(M.md(t))
     end
   end
 
-  if info.mod or #info.methods > 0 then
-    add("## 📦 Module\n")
+  local mod_lines = info.mod and not info.mod:find("^%s*$") and vim.split(info.mod, "\n") or {}
+  local hide = #mod_lines == 0 or (#mod_lines == 1 and mod_lines[1]:find("@class"))
+
+  if not hide or #info.methods > 0 then
+    add(("## 📦 %s\n"):format(info.modname or "Module"))
   end
 
-  if info.mod then
-    local mod_lines = vim.split(info.mod, "\n")
-    mod_lines = vim.tbl_filter(function(line)
-      local overload = line:match("^%-%-%-%s*@overload (.*)(%s*)$") --[[@as string?]]
-      if overload then
-        table.insert(info.methods, {
-          name = "",
-          args = "",
-          type = "",
-          comment = "---@type " .. overload,
-        })
-        return false
-      elseif line:find("^%s*$") then
-        return false
-      end
-      return true
-    end, mod_lines)
-    local hide = #mod_lines == 1 and mod_lines[1]:find("@class")
-    if not hide then
-      table.insert(mod_lines, prefix .. " = {}")
-      add(M.md(table.concat(mod_lines, "\n")))
-    end
+  if info.mod and not hide then
+    table.insert(mod_lines, prefix .. " = {}")
+    add(M.md(table.concat(mod_lines, "\n")))
   end
 
   table.sort(info.methods, function(a, b)
+    if a.mod ~= b.mod then
+      return a.mod < b.mod
+    end
     if a.type == b.type then
       return a.name < b.name
     end
     return a.type < b.type
   end)
 
+  local last ---@type string?
   for _, method in ipairs(info.methods) do
-    add(("### `%s%s%s()`\n"):format(method.type == ":" and name or prefix, method.type, method.name))
-    local code = ("%s\n%s%s%s(%s)"):format(
-      method.comment or "",
-      method.type == ":" and name or prefix,
-      method.type,
-      method.name,
-      method.args
-    )
+    local title = ("### `%s%s%s()`\n"):format(method.mod, method.type, method.name)
+    if title ~= last then
+      last = title
+      add(title)
+    end
+    local code = ("%s\n%s%s%s(%s)"):format(method.comment or "", method.mod, method.type, method.name, method.args)
     add(M.md(code))
   end
 
@@ -408,11 +437,46 @@ function M._build()
       local name = plugin.name
       print("[gen] " .. name .. ".md")
       local lines = vim.fn.readfile(plugin.file)
-      local info = M.extract(lines)
+      local info = M.extract(lines, { prefix = "Snacks", name = name })
+
+      local children = {} ---@type snacks.docs.Info[]
+      for c, child in pairs(plugin.meta.merge or {}) do
+        local child_name = type(c) == "number" and child or c --[[@as string]]
+        local child_file = ("%s/%s/%s"):format(Snacks.meta.root, name, child:gsub("%.", "/"))
+        for _, f in ipairs({ ".lua", "/init.lua" }) do
+          if vim.uv.fs_stat(child_file .. f) then
+            child_file = child_file .. f
+            break
+          end
+        end
+        assert(vim.uv.fs_stat(child_file), ("file not found: %s"):format(child_file))
+        local child_lines = vim.fn.readfile(child_file)
+        local child_info = M.extract(child_lines, { prefix = "Snacks." .. name, name = child_name })
+        child_info.modname = "snacks." .. name .. "." .. child
+        if child_info.config then
+          assert(not info.config, "config already exists")
+          info.config = child_info.config
+        end
+        vim.list_extend(info.types, child_info.types)
+        table.insert(children, child_info)
+      end
+
       vim.list_extend(styles.styles, info.styles)
       info.config = name ~= "init" and info.config or nil
       plugin.meta.config = info.config ~= nil
-      M.write(name, M.render(name, info))
+
+      local rendered = M.render(name, info)
+
+      for _, child in ipairs(children) do
+        table.insert(rendered, "")
+        vim.list_extend(
+          rendered,
+          M.render(name, child, { setup = false, config = false, styles = false, types = false })
+        )
+      end
+
+      M.write(name, rendered)
+
       if plugin.meta.types then
         table.insert(types.fields, ("---@field %s snacks.%s"):format(plugin.name, plugin.name))
       end
@@ -454,7 +518,7 @@ end
 function M.readme(plugins, types)
   local path = "lua/snacks/init.lua"
   local lines = vim.fn.readfile(path) --[[ @as string[] ]]
-  local info = M.extract(lines)
+  local info = M.extract(lines, { prefix = "Snacks", name = "init" })
   local readme = table.concat(vim.fn.readfile("README.md"), "\n")
   local example = table.concat(vim.fn.readfile("docs/examples/init.lua"), "\n")
 
