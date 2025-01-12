@@ -47,7 +47,7 @@ function M.man(opts)
     args = { "-k", "." },
     ---@param item snacks.picker.finder.Item
     transform = function(item)
-      local page, section, desc = item.text:match("^(%S+)%s+%((%S-)%)%s+-%s+(.+)$")
+      local page, section, desc = item.text:match("^(%S+)%s*%((%S-)%)%s+-%s+(.+)$")
       if page and section and desc then
         item.section = section
         item.desc = desc
