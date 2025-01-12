@@ -36,7 +36,8 @@ end
 ---@param client vim.lsp.Client
 ---@return vim.lsp.Client
 local function wrap(client)
-  if vim.lsp.client then
+  local meta = getmetatable(client)
+  if meta and meta.request then
     return client
   end
   ---@diagnostic disable-next-line: undefined-field
@@ -62,11 +63,15 @@ end
 ---@return vim.lsp.Client[]
 function M.get_clients(buf, method)
   ---@param client vim.lsp.Client
-  return vim.tbl_filter(function(client)
-    client = wrap(client)
-    return client:supports_method(method, buf)
+  local clients = vim.tbl_map(function(client)
+    return wrap(client)
     ---@diagnostic disable-next-line: deprecated
   end, (vim.lsp.get_clients or vim.lsp.get_active_clients)({ bufnr = buf }))
+  ---@param client vim.lsp.Client
+  return vim.tbl_filter(function(client)
+    return client:supports_method(method, buf)
+    ---@diagnostic disable-next-line: deprecated
+  end, clients)
 end
 
 ---@param buf number
@@ -108,6 +113,22 @@ function M.request(buf, method, params, cb)
   async:suspend()
 end
 
+-- Support for older versions of neovim
+---@param locs vim.quickfix.entry[]
+function M.fix_locs(locs)
+  for _, loc in ipairs(locs) do
+    local range = loc.user_data and loc.user_data.range or nil ---@type lsp.Range?
+    if range then
+      if not loc.end_lnum then
+        if range.start.line == range["end"].line then
+          loc.end_lnum = loc.lnum
+          loc.end_col = loc.col + range["end"].character - range.start.character
+        end
+      end
+    end
+  end
+end
+
 ---@param method string
 ---@param opts snacks.picker.lsp.Config|{context?:lsp.ReferenceContext}
 ---@param filter snacks.picker.Filter
@@ -128,12 +149,27 @@ function M.get_locations(method, opts, filter)
       return params
     end, function(client, result)
       local items = vim.lsp.util.locations_to_items(result or {}, client.offset_encoding)
+      M.fix_locs(items)
+
       if not opts.include_current then
         ---@param item vim.quickfix.entry
         items = vim.tbl_filter(function(item)
-          return not (item.filename == fname and item.lnum <= cursor[1] and item.end_lnum >= cursor[1])
+          if item.filename ~= fname then
+            return true
+          end
+          if not item.lnum then
+            return true
+          end
+          if item.lnum == cursor[1] then
+            return false
+          end
+          if not item.end_lnum then
+            return true
+          end
+          return not (item.lnum <= cursor[1] and item.end_lnum >= cursor[1])
         end, items)
       end
+
       local done = {} ---@type table<string, boolean>
       for _, loc in ipairs(items) do
         ---@type snacks.picker.finder.Item
@@ -142,7 +178,7 @@ function M.get_locations(method, opts, filter)
           buf = loc.bufnr,
           file = loc.filename,
           pos = { loc.lnum, loc.col },
-          end_pos = { loc.end_lnum, loc.end_col },
+          end_pos = loc.end_lnum and loc.end_col and { loc.end_lnum, loc.end_col } or nil,
           comment = loc.text,
         }
         local loc_key = loc.filename .. ":" .. loc.lnum
@@ -188,6 +224,7 @@ function M.results_to_items(client, results, opts)
   end
 
   local loc_items = vim.lsp.util.locations_to_items(locs, client.offset_encoding)
+  M.fix_locs(loc_items)
   local ranges = {} ---@type table<lsp.Loc, vim.quickfix.entry>
   for _, i in ipairs(loc_items) do
     local loc = i.user_data ---@type lsp.Loc
@@ -208,7 +245,7 @@ function M.results_to_items(client, results, opts)
         file = sym.filename,
         buf = sym.bufnr,
         pos = { sym.lnum, sym.col },
-        end_pos = { sym.end_lnum, sym.end_col },
+        end_pos = sym.end_lnum and sym.end_col and { sym.end_lnum, sym.end_col },
       }
 
       items[#items + 1] = item
