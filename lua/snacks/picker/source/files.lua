@@ -49,7 +49,7 @@ local function get_cmd(opts, filter)
 
   -- file glob
   ---@type string?
-  local pattern = opts.live and filter.pattern or filter.search
+  local pattern = filter.search
   pattern = pattern ~= "" and pattern or nil
   if pattern then
     if is_fd then

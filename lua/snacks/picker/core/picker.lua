@@ -100,31 +100,19 @@ function M.new(opts)
     },
   }))
 
+  -- apply box highlight groups
+  local boxwhl = Snacks.picker.highlight.winhl("SnacksPickerBox")
+  for _, win in pairs(self.layout.box_wins) do
+    win.opts.wo.winhighlight = boxwhl
+  end
+
   M.last = {
     opts = self.opts,
     selected = {},
     filter = self.input.filter,
   }
 
-  local boxwhl = Snacks.picker.highlight.winhl("SnacksPickerBox")
   self.source_name = Snacks.picker.util.title(self.opts.source or "search")
-  local wins = { self.layout.win }
-  vim.list_extend(wins, vim.tbl_values(self.layout.wins))
-  vim.list_extend(wins, vim.tbl_values(self.layout.box_wins))
-  for _, win in pairs(self.layout.box_wins) do
-    win.opts.wo.winhighlight = boxwhl
-  end
-  for _, win in pairs(wins) do
-    if win.opts.title then
-      win.opts.title = Snacks.picker.util.tpl(win.opts.title, { source = self.source_name })
-    end
-  end
-  self.layout:each(function(widget)
-    ---@cast widget snacks.layout.Win
-    if widget.title then
-      widget.title = Snacks.picker.util.tpl(widget.title, { source = self.source_name })
-    end
-  end, { boxes = false })
 
   -- properly close the picker when the window is closed
   self.input.win:on("WinClosed", function()
@@ -146,6 +134,23 @@ function M.new(opts)
 
   self:find()
   return self
+end
+
+function M:update_titles()
+  local data = {
+    source = self.source_name,
+    live = self.opts.live and self.opts.icons.ui.live or "",
+  }
+  local wins = { self.layout.win }
+  vim.list_extend(wins, vim.tbl_values(self.layout.wins))
+  vim.list_extend(wins, vim.tbl_values(self.layout.box_wins))
+  for _, win in pairs(wins) do
+    if win.opts.title then
+      local tpl = win.meta.title_tpl or win.opts.title
+      win.meta.title_tpl = tpl
+      win:set_title(Snacks.picker.util.tpl(tpl, data))
+    end
+  end
 end
 
 ---@private
@@ -187,6 +192,7 @@ function M:show()
   end
   self.shown = true
   self.layout:show()
+  self:update_titles()
   self.input.win:focus()
 end
 
@@ -334,20 +340,27 @@ function M:hist(forward)
   self.input:set(M.history[self.hist_cursor], "")
 end
 
----@param pattern string
-function M:filter(pattern)
-  pattern = vim.trim(pattern)
-  if self.matcher.pattern == pattern then
-    return
-  end
-  M.history[self.hist_idx] = pattern
-  self.matcher:init({ pattern = pattern, live = self.opts.live })
+function M:filter()
+  local pattern = vim.trim(self.input.filter.pattern)
+  local search = vim.trim(self.input.filter.search)
+  local needs_match = false
 
-  if self.opts.live then
+  if self.matcher.pattern ~= pattern then
+    -- FIXME: history should also capture search
+    M.history[self.hist_idx] = pattern
+    self.matcher:init({ pattern = pattern })
+    needs_match = true
+  end
+
+  if self.finder:changed(search) then
     -- pause rapid list updates to prevent flickering
     -- of the search results
     self.list:pause(60)
     return self:find()
+  end
+
+  if not needs_match then
+    return
   end
 
   local prios = {} ---@type snacks.picker.Item[]

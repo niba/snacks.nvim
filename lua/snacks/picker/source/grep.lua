@@ -39,7 +39,7 @@ local function get_cmd(opts, filter)
   end
 
   -- file glob
-  table.insert(args, opts.live and filter.pattern or filter.search)
+  table.insert(args, filter.search)
 
   -- dirs
   if opts.dirs and #opts.dirs > 0 then
@@ -53,8 +53,7 @@ end
 ---@param opts snacks.picker.grep.Config
 ---@type snacks.picker.finder
 function M.grep(opts, filter)
-  local pattern = opts.live and filter.pattern or filter.search
-  if pattern == "" then
+  if filter.search == "" then
     return function() end
   end
   local cwd = not (opts.dirs and #opts.dirs > 0) and vim.fs.normalize(opts and opts.cwd or uv.cwd() or ".") or nil

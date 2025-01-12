@@ -4,6 +4,7 @@ local Async = require("snacks.picker.util.async")
 ---@field _find snacks.picker.finder
 ---@field task snacks.picker.Async
 ---@field items snacks.picker.finder.Item[]
+---@field filter? snacks.picker.Filter
 local M = {}
 M.__index = M
 
@@ -32,14 +33,20 @@ function M:count()
   return #self.items
 end
 
+---@param search string
+function M:changed(search)
+  search = vim.trim(search)
+  return not self.filter or self.filter.search ~= search
+end
+
 ---@param picker snacks.Picker
 function M:run(picker)
   self.task:abort()
   self.items = {}
   local yield ---@type fun()
   collectgarbage("stop") -- moar speed
-  local filter = require("snacks.picker.core.filter").new(picker, picker.opts)
-  local finder = self._find(picker.opts, filter)
+  self.filter = require("snacks.picker.core.filter").new(picker, picker.opts)
+  local finder = self._find(picker.opts, self.filter)
   if type(finder) == "table" then
     local items = finder --[[@as snacks.picker.finder.Item[] ]]
     finder = function(cb)

@@ -31,7 +31,7 @@ function M.new(picker, opts)
     show = false,
     enter = true,
     height = 1,
-    text = self.filter.pattern,
+    text = opts.live and self.filter.search or self.filter.pattern,
     ft = "regex",
     on_win = function()
       vim.fn.prompt_setprompt(self.win.buf, "")
@@ -63,8 +63,13 @@ function M.new(picker, opts)
         return
       end
       vim.bo[self.win.buf].modified = false
-      self.filter.pattern = self:get()
-      picker:filter(self.filter.pattern)
+      local pattern = self:get()
+      if self.picker.opts.live then
+        self.filter.search = pattern
+      else
+        self.filter.pattern = pattern
+      end
+      picker:filter()
     end, { ms = opts.live and 100 or 30 }),
     { buf = true }
   )
@@ -78,8 +83,9 @@ function M:statuscolumn()
       parts[#parts + 1] = ("%%#%s#%s%%*"):format(hl, str:gsub("%%", "%%"))
     end
   end
-  if self.filter.search ~= "" then
-    add(self.filter.search, "SnacksPickerInputSearch")
+  local pattern = self.picker.opts.live and self.filter.pattern or self.filter.search
+  if pattern ~= "" then
+    add(pattern, "SnacksPickerInputSearch")
   end
   add(self.picker.opts.prompt or " ", "SnacksPickerPrompt")
   return table.concat(parts, " ")
@@ -127,13 +133,16 @@ end
 ---@param pattern? string
 ---@param search? string
 function M:set(pattern, search)
-  self.filter.pattern = pattern or ""
+  self.filter.pattern = pattern or self.filter.pattern
   self.filter.search = search or self.filter.search
-  vim.api.nvim_buf_set_lines(self.win.buf, 0, -1, false, { self.filter.pattern })
+  vim.api.nvim_buf_set_lines(self.win.buf, 0, -1, false, {
+    self.picker.opts.live and self.filter.search or self.filter.pattern,
+  })
   vim.api.nvim_win_set_cursor(self.win.win, { 1, #self:get() + 1 })
   self.totals = ""
   self._statuscolumn = ""
   self:update()
+  self.picker:update_titles()
 end
 
 function M.spinner()

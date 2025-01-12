@@ -8,6 +8,7 @@
 ---@field backdrop? snacks.win
 ---@field keys snacks.win.Keys[]
 ---@field events (snacks.win.Event|{event:string|string[]})[]
+---@field meta table<string, string>
 ---@overload fun(opts? :snacks.win.Config|{}): snacks.win
 local M = setmetatable({}, {
   __call = function(t, ...)
@@ -232,6 +233,7 @@ function M.new(opts)
   local self = setmetatable({}, M)
   id = id + 1
   self.id = id
+  self.meta = {}
   opts = M.resolve(Snacks.config.get("win", defaults), opts)
   if opts.minimal then
     opts = M.resolve("minimal", opts)
@@ -424,6 +426,33 @@ function M:toggle()
     self:show()
   end
   return self
+end
+
+---@param title string
+---@param pos? "center"|"left"|"right"
+function M:set_title(title, pos)
+  title = vim.trim(title)
+  if title ~= "" then
+    -- HACK: add extra space when last char is non word
+    -- like for icons etc
+    if not title:sub(-1):match("%w") then
+      title = title .. " "
+    end
+    title = " " .. title .. " "
+  end
+  pos = pos or self.opts.title_pos or "center"
+  if self.opts.title == title and self.opts.title_pos == pos then
+    return
+  end
+  self.opts.title = title
+  self.opts.title_pos = pos
+  if not self:valid() then
+    return
+  end
+  vim.api.nvim_win_set_config(self.win, {
+    title = self.opts.title,
+    title_pos = self.opts.title_pos,
+  })
 end
 
 ---@private

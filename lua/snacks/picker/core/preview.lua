@@ -77,16 +77,7 @@ end
 
 ---@param title string
 function M:set_title(title)
-  if not self.win:valid() then
-    return
-  end
-  if title ~= "" then
-    title = " " .. title .. " "
-  end
-  vim.api.nvim_win_set_config(self.win.win, {
-    title = title,
-    title_pos = self.win.opts.title_pos or "center",
-  })
+  self.win:set_title(title)
 end
 
 ---@param buf? number
@@ -102,7 +93,7 @@ function M:reset()
   if vim.api.nvim_buf_is_valid(self.win.scratch_buf) then
     vim.api.nvim_win_set_buf(self.win.win, self.win.scratch_buf)
   else
-    self.win:open_buf()
+    self.win:scratch()
   end
   self:set_title("")
   vim.treesitter.stop(self.win.buf)
@@ -118,6 +109,10 @@ end
 function M:scratch()
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
+  local ei = vim.o.eventignore
+  vim.o.eventignore = "all"
+  vim.bo[buf].filetype = "snacks_picker_preview_scratch"
+  vim.o.eventignore = ei
   vim.api.nvim_win_set_buf(self.win.win, buf)
   return buf
 end

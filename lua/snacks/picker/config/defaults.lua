@@ -171,7 +171,7 @@ local defaults = {
       {
         box = "vertical",
         border = "rounded",
-        title = " {source} ",
+        title = "{source} {live}",
         title_pos = "center",
         width = 0.5,
         { win = "input", height = 1, border = "bottom" },
@@ -183,6 +183,7 @@ local defaults = {
   ---@class snacks.picker.icons
   icons = {
     ui = {
+      live = "󰐰 ",
       selected = "● ",
       -- selected = " ",
     },

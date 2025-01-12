@@ -188,19 +188,7 @@ function M.toggle_live(picker)
     return
   end
   picker.opts.live = not picker.opts.live
-  if picker.opts.live then
-    if picker.input.filter.search ~= "" then
-      local pattern = picker.input.filter.search
-      if picker.input.filter.pattern ~= "" then
-        pattern = pattern .. " " .. picker.input.filter.pattern
-      end
-      picker.input:set(pattern, "")
-    else
-      picker:find()
-    end
-  else
-    picker.input:set("", picker.input.filter.pattern)
-  end
+  picker.input:set()
   picker.input:update()
 end
 

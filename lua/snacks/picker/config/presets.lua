@@ -16,7 +16,7 @@ M.telescope = {
       {
         box = "vertical",
         { win = "list", title = " Results ", title_pos = "center", border = "rounded" },
-        { win = "input", height = 1, border = "rounded", title = " {source} ", title_pos = "center" },
+        { win = "input", height = 1, border = "rounded", title = "{source} {live}", title_pos = "center" },
       },
       {
         win = "preview",
@@ -72,7 +72,7 @@ M.dropdown = {
       {
         box = "vertical",
         border = "rounded",
-        title = " {source} ",
+        title = "{source} {live}",
         title_pos = "center",
         { win = "input", height = 1, border = "bottom" },
         { win = "list", border = "none" },
@@ -90,7 +90,7 @@ M.vertical = {
       height = 0.6,
       zindex = 50,
       border = "rounded",
-      title = " {source} ",
+      title = "{source} {live}",
       title_pos = "center",
     },
     layout = {
@@ -114,7 +114,7 @@ M.vscode = {
     },
     layout = {
       box = "vertical",
-      { win = "input", height = 1, border = "rounded", title = " {source} ", title_pos = "center" },
+      { win = "input", height = 1, border = "rounded", title = "{source} {live}", title_pos = "center" },
       { win = "list", border = "hpad" },
     },
   },
@@ -127,7 +127,7 @@ M.nopreview = {
       height = 0.5,
       zindex = 50,
       border = "rounded",
-      title = " {source} ",
+      title = "{source} {live}",
       title_pos = "center",
     },
     layout = {
