@@ -47,6 +47,7 @@ function M:run(picker)
   collectgarbage("stop") -- moar speed
   self.filter = require("snacks.picker.core.filter").new(picker, picker.opts)
   local finder = self._find(picker.opts, self.filter)
+  local limit = picker.opts.limit or math.huge
   if type(finder) == "table" then
     local items = finder --[[@as snacks.picker.finder.Item[] ]]
     finder = function(cb)
@@ -59,6 +60,13 @@ function M:run(picker)
   self.task = Async.new(function()
     ---@async
     finder(function(item)
+      if #self.items >= limit then
+        self.task:abort()
+        if coroutine.running() then
+          Async.yield()
+        end
+        return
+      end
       item.idx = #self.items + 1
       self.items[item.idx] = item
       picker.matcher.task:resume()

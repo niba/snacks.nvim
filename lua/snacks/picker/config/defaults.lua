@@ -53,6 +53,7 @@ local M = {}
 ---@field search? string|fun():string Initial search string used by finders
 ---@field cwd? string
 ---@field live? boolean
+---@field limit? number when set, the finder will stop after finding this number of items. useful for live searches
 ---@field ui_select? boolean
 ---@field preset? string|string[]
 ---@field auto_confirm? boolean Automatically confirm if there is only one item
