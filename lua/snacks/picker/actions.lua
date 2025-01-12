@@ -14,7 +14,7 @@ function M.edit(picker)
     vim.cmd("normal! m'")
   end)
 
-  local items = picker:selected()
+  local items = picker:selected({ fallback = true })
   for _, item in ipairs(items) do
     -- load the buffer
     local buf = item.buf ---@type number
@@ -50,7 +50,8 @@ M.cancel = function() end
 M.confirm = M.edit
 
 ---@param items snacks.picker.Item[]
-local function setqflist(items)
+---@param opts? {win?:number}
+local function setqflist(items, opts)
   local qf = {} ---@type vim.quickfix.entry[]
   for _, item in ipairs(items) do
     qf[#qf + 1] = {
@@ -65,18 +66,29 @@ local function setqflist(items)
       valid = true,
     }
   end
-  vim.fn.setqflist(qf)
-  vim.cmd("copen")
+  if opts and opts.win then
+    vim.fn.setloclist(opts.win, qf)
+    vim.cmd("lopen")
+  else
+    vim.fn.setqflist(qf)
+    vim.cmd("copen")
+  end
 end
 
-function M.qf(picker)
+--- Send selected or all items to the quickfix list.
+function M.qflist(picker)
   picker:close()
-  setqflist(picker:selected())
+  local sel = picker:selected()
+  local items = #sel > 0 and sel or picker.finder.items
+  setqflist(items)
 end
 
-function M.qf_all(picker)
+--- Send selected or all items to the location list.
+function M.loclist(picker)
   picker:close()
-  setqflist(picker.finder.items)
+  local sel = picker:selected()
+  local items = #sel > 0 and sel or picker.finder.items
+  setqflist(items, { win = picker.parent_win })
 end
 
 function M.copy(_, item)
