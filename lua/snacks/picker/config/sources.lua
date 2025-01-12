@@ -20,7 +20,7 @@ M.autocmds = {
 ---@field filter? snacks.picker.filter.Config
 M.buffers = {
   finder = "buffers",
-  format = "file",
+  format = "buffer",
   hidden = false,
   unloaded = true,
   current = true,

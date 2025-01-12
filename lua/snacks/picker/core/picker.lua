@@ -222,6 +222,10 @@ function M:selected(opts)
   return ret
 end
 
+function M:count()
+  return self.finder:count()
+end
+
 function M:close()
   if self.closed then
     return

@@ -18,6 +18,7 @@ function M.severity(item, picker)
   return ret
 end
 
+---@param item snacks.picker.Item
 function M.filename(item)
   ---@type snacks.picker.Highlights
   local ret = {}
@@ -160,7 +161,7 @@ end
 function M.lines(item)
   local ret = {} ---@type snacks.picker.Highlights
   local line_count = vim.api.nvim_buf_line_count(item.buf)
-  local idx = Snacks.picker.util.align(tostring(item.idx), #tostring(line_count), "right")
+  local idx = Snacks.picker.util.align(tostring(item.idx), #tostring(line_count), { align = "right" })
   ret[#ret + 1] = { idx, "LineNr", virtual = true }
   ret[#ret + 1] = { "  ", virtual = true }
   ret[#ret + 1] = { item.text }
@@ -324,6 +325,16 @@ function M.register(item)
   ret[#ret + 1] = { "]", "SnacksPickerDelim" }
   ret[#ret + 1] = { " " }
   ret[#ret + 1] = { item.value }
+  return ret
+end
+
+function M.buffer(item)
+  local ret = {} ---@type snacks.picker.Highlights
+  ret[#ret + 1] = { Snacks.picker.util.align(tostring(item.buf), 3), "SnacksPickerBufNr" }
+  ret[#ret + 1] = { " " }
+  ret[#ret + 1] = { Snacks.picker.util.align(item.flags, 2, { align = "right" }), "SnacksPickerBufFlags" }
+  ret[#ret + 1] = { " " }
+  vim.list_extend(ret, M.filename(item))
   return ret
 end
 

@@ -58,7 +58,7 @@ function M.file(ctx)
       ctx.preview:reset()
 
       local name = vim.fn.fnamemodify(path, ":t")
-      ctx.preview:set_title(name)
+      ctx.preview:set_title(ctx.item.title or name)
 
       local stat = uv.fs_stat(path)
       if not stat then

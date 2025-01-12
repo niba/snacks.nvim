@@ -112,7 +112,7 @@ function M.jumps()
       end
       local label = tostring(#jumps - #items)
       table.insert(items, 1, {
-        label = Snacks.picker.util.align(label, #tostring(#jumps), "right"),
+        label = Snacks.picker.util.align(label, #tostring(#jumps), { align = "right" }),
         buf = buf,
         line = line,
         text = table.concat({ file, line }, " "),

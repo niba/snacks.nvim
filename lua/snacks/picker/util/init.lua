@@ -28,10 +28,14 @@ end
 
 ---@param text string
 ---@param width number
----@param align? "left" | "right"
-function M.align(text, width, align)
+---@param opts? {align?: "left" | "right", truncate?: boolean}
+function M.align(text, width, opts)
+  opts = opts or {}
   local tw = vim.api.nvim_strwidth(text)
-  if align == "right" then
+  if tw > width then
+    return opts.truncate and (vim.fn.strcharpart(text, 0, width - 1) .. "…") or text
+  end
+  if opts.align == "right" then
     return (" "):rep(width - tw) .. text
   end
   return text .. (" "):rep(width - tw)

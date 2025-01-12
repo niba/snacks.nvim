@@ -30,6 +30,8 @@ Snacks.util.set_hl({
   Register = "Number",
   KeymapMode = "Number",
   KeymapLhs = "Special",
+  BufNr = "Number",
+  BufFlags = "NonText",
   KeymapRhs = "NonText",
   GitCommit = "@variable.builtin",
   GitBreaking = "Error",
