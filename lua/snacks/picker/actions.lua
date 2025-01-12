@@ -202,6 +202,7 @@ end
 
 function M.focus_input(picker)
   picker.input.win:focus()
+  vim.cmd("startinsert")
 end
 
 function M.focus_list(picker)

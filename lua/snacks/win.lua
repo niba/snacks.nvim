@@ -112,6 +112,15 @@ Snacks.config.style("float", {
   zindex = 50,
 })
 
+Snacks.config.style("help", {
+  position = "float",
+  backdrop = false,
+  border = "top",
+  row = -1,
+  width = 0,
+  height = 0.3,
+})
+
 Snacks.config.style("split", {
   position = "bottom",
   height = 0.4,
@@ -193,6 +202,9 @@ Snacks.util.set_hl({
   NormalNC = "NormalFloat",
   WinBar = "Title",
   WinBarNC = "SnacksWinBar",
+  WinKey = "Keyword",
+  WinKeySep = "NonText",
+  WinKeyDesc = "Function",
 }, { prefix = "Snacks", default = true })
 
 local id = 0
@@ -314,6 +326,80 @@ function M:action(actions)
     end
   end,
     table.concat(desc, ", ")
+end
+
+---@param opts? {col_width?: number, key_width?: number, win?: snacks.win.Config}
+function M:toggle_help(opts)
+  opts = opts or {}
+  local col_width, key_width = opts.col_width or 30, opts.key_width or 10
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local buf = vim.api.nvim_win_get_buf(win)
+    if vim.bo[buf].filetype == "snacks_win_help" then
+      vim.api.nvim_win_close(win, true)
+      return
+    end
+  end
+  local ns = vim.api.nvim_create_namespace("snacks.win.help")
+  local win = M.new(M.resolve({ style = "help" }, opts.win or {}, {
+    show = false,
+    focusable = false,
+    zindex = self.opts.zindex + 1,
+    bo = { filetype = "snacks_win_help" },
+  }))
+  self:on("WinClosed", function()
+    win:close()
+  end, { win = true })
+  local dim = win:dim()
+  local cols = math.floor((dim.width - 1) / col_width)
+  local rows = math.ceil(#self.keys / cols)
+  win.opts.height = rows
+  local keys = {} ---@type vim.api.keyset.get_keymap[]
+  vim.list_extend(keys, vim.api.nvim_buf_get_keymap(self.buf, "n"))
+  vim.list_extend(keys, vim.api.nvim_buf_get_keymap(self.buf, "i"))
+  table.sort(keys, function(a, b)
+    return (a.desc or a.lhs or "") < (b.desc or b.lhs or "")
+  end)
+  local help = {} ---@type {[1]:string, [2]:string}[][]
+  local row, col = 0, 1
+
+  ---@param str string
+  ---@param len number
+  ---@param align? "left"|"right"
+  local function trunc(str, len, align)
+    local w = vim.api.nvim_strwidth(str)
+    if w > len then
+      return vim.fn.strcharpart(str, 0, len - 1) .. "…"
+    end
+    return align == "right" and (string.rep(" ", len - w) .. str) or (str .. string.rep(" ", len - w))
+  end
+
+  local done = {} ---@type table<string, boolean>
+  for _, keymap in ipairs(keys) do
+    local key = vim.fn.keytrans(Snacks.util.keycode(keymap.lhs or ""))
+    if not done[key] and not (keymap.desc and keymap.desc:find("which%-key")) then
+      done[key] = true
+      row = row + 1
+      if row > rows then
+        row, col = 1, col + 1
+      end
+      help[row] = help[row] or {}
+      vim.list_extend(help[row], {
+        { trunc(key, key_width, "right"), "SnacksWinKey" },
+        { " " },
+        { "➜", "SnacksWinKeySep" },
+        { " " },
+        { trunc(keymap.desc or "", col_width - key_width - 3), "SnacksWinKeyDesc" },
+      })
+    end
+  end
+  win:show()
+  for l, line in ipairs(help) do
+    vim.api.nvim_buf_set_lines(win.buf, l - 1, l, false, { "" })
+    vim.api.nvim_buf_set_extmark(win.buf, ns, l - 1, 0, {
+      virt_text = line,
+      virt_text_pos = "overlay",
+    })
+  end
 end
 
 ---@param event string|string[]
@@ -505,7 +591,9 @@ function M:open_win()
   local relative = self.opts.relative or "editor"
   local position = self.opts.position or "float"
   local enter = self.opts.enter == nil or self.opts.enter or false
-  enter = not self.opts.focusable and enter or false
+  if self.opts.focusable == false then
+    enter = false
+  end
   local opts = self:win_opts()
   if position == "float" then
     self.win = vim.api.nvim_open_win(self.buf, enter, opts)
@@ -694,6 +782,7 @@ function M:show()
         return spec[2](self)
       end
     end
+    spec.desc = spec.desc or opts.desc
     ---@cast spec snacks.win.Keys
     vim.keymap.set(spec.mode or "n", spec[1], rhs, opts)
   end
