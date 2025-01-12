@@ -183,6 +183,7 @@ function M.git_diff(ctx)
     "-c",
     "delta." .. vim.o.background .. "=true",
     "diff",
+    "--",
     ctx.item.file,
   }
   M.cmd(cmd, ctx)
