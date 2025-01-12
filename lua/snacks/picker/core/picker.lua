@@ -40,7 +40,7 @@ M._active = {}
 ---@type snacks.picker.Last?
 M.last = nil
 
----@type string[]
+---@type {pattern: string, search: string, live?: boolean}[]
 M.history = {}
 
 ---@private
@@ -332,22 +332,29 @@ function M:find()
   self:progress()
 end
 
+function M:hist_record()
+  M.history[self.hist_idx] = {
+    pattern = self.input.filter.pattern,
+    search = self.input.filter.search,
+    live = self.opts.live,
+  }
+end
+
 ---@param forward? boolean
 function M:hist(forward)
-  M.history[self.hist_idx] = self.input.filter.pattern
+  self:hist_record()
   self.hist_cursor = self.hist_cursor + (forward and 1 or -1)
   self.hist_cursor = math.min(math.max(self.hist_cursor, 1), #M.history)
-  self.input:set(M.history[self.hist_cursor], "")
+  self.opts.live = M.history[self.hist_cursor].live
+  self.input:set(M.history[self.hist_cursor].pattern, M.history[self.hist_cursor].search)
 end
 
 function M:filter()
   local pattern = vim.trim(self.input.filter.pattern)
   local search = vim.trim(self.input.filter.search)
   local needs_match = false
-
+  self:hist_record()
   if self.matcher.pattern ~= pattern then
-    -- FIXME: history should also capture search
-    M.history[self.hist_idx] = pattern
     self.matcher:init({ pattern = pattern })
     needs_match = true
   end
