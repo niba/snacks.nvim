@@ -12,13 +12,15 @@ M.__index = M
 
 local uv = vim.uv or vim.loop
 
----@param picker snacks.Picker
 ---@param opts snacks.picker.Config|{filter?:snacks.picker.filter.Config}
-function M.new(picker, opts)
+function M.new(opts)
   local self = setmetatable({}, M)
   self.opts = opts.filter or {}
-  self.pattern = vim.trim(picker.input.filter.pattern)
-  self.search = vim.trim(picker.input.filter.search)
+  local function gets(v)
+    return type(v) == "function" and v() or v or "" --[[@as string]]
+  end
+  self.pattern = gets(opts.pattern)
+  self.search = gets(opts.search)
   local filter = opts.filter
   self.all = not filter or not (filter.cwd or filter.buf or filter.paths or filter.filter)
   self.paths = {}
@@ -34,6 +36,20 @@ function M.new(picker, opts)
     end
   end
   return self
+end
+
+---@param opts? {trim?:boolean}
+---@return snacks.picker.Filter
+function M:clone(opts)
+  local ret = setmetatable({}, { __index = self })
+  if opts and opts.trim then
+    ret.pattern = vim.trim(self.pattern)
+    ret.search = vim.trim(self.search)
+  else
+    ret.pattern = self.pattern
+    ret.search = self.search
+  end
+  return ret
 end
 
 ---@param item snacks.picker.finder.Item):boolean

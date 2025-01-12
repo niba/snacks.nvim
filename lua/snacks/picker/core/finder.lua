@@ -45,7 +45,7 @@ function M:run(picker)
   self.items = {}
   local yield ---@type fun()
   collectgarbage("stop") -- moar speed
-  self.filter = require("snacks.picker.core.filter").new(picker, picker.opts)
+  self.filter = picker.input.filter:clone({ trim = true })
   local finder = self._find(picker.opts, self.filter)
   local limit = picker.opts.limit or math.huge
   if type(finder) == "table" then

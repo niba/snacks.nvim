@@ -11,27 +11,18 @@ local uv = vim.uv or vim.loop
 local ns = vim.api.nvim_create_namespace("snacks.picker.input")
 
 ---@param picker snacks.Picker
----@param opts snacks.picker.Config
-function M.new(picker, opts)
+function M.new(picker)
   local self = setmetatable({}, M)
   self.totals = ""
   self.picker = picker
-
-  local function gets(v)
-    return type(v) == "function" and v() or v or "" --[[@as string]]
-  end
-
-  self.filter = {
-    pattern = gets(opts.pattern),
-    search = gets(opts.search),
-  }
+  self.filter = require("snacks.picker.core.filter").new(picker.opts)
   self._statuscolumn = self:statuscolumn()
 
-  self.win = Snacks.win(Snacks.win.resolve(opts.win.input, {
+  self.win = Snacks.win(Snacks.win.resolve(picker.opts.win.input, {
     show = false,
     enter = true,
     height = 1,
-    text = opts.live and self.filter.search or self.filter.pattern,
+    text = picker.opts.live and self.filter.search or self.filter.pattern,
     ft = "regex",
     on_win = function()
       vim.fn.prompt_setprompt(self.win.buf, "")
@@ -69,8 +60,8 @@ function M.new(picker, opts)
       else
         self.filter.pattern = pattern
       end
-      picker:filter()
-    end, { ms = opts.live and 100 or 30 }),
+      picker:match()
+    end, { ms = picker.opts.live and 100 or 30 }),
     { buf = true }
   )
   return self

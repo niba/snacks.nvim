@@ -84,7 +84,7 @@ function M.new(opts)
   M._active[self] = true
 
   self.list = require("snacks.picker.core.list").new(self)
-  self.input = require("snacks.picker.core.input").new(self, self.opts)
+  self.input = require("snacks.picker.core.input").new(self)
   self.preview = require("snacks.picker.core.preview").new(self.opts)
 
   self.layout = Snacks.layout.new(vim.tbl_deep_extend("force", self.opts.layout or {}, {
@@ -216,7 +216,7 @@ end
 function M:selected(opts)
   opts = opts or {}
   local ret = vim.deepcopy(self.list.selected)
-  if #ret == 0 and opts.fallback ~= false then
+  if #ret == 0 and opts.fallback then
     return { self:current() }
   end
   return ret
@@ -329,6 +329,7 @@ function M:action(actions)
   return self.input.win:execute(actions)
 end
 
+--- Clear the list and run the finder and matcher
 function M:find()
   self.list:clear()
   self.finder:run(self)
@@ -353,7 +354,10 @@ function M:hist(forward)
   self.input:set(M.history[self.hist_cursor].pattern, M.history[self.hist_cursor].search)
 end
 
-function M:filter()
+--- Run the matcher with the current pattern.
+--- May also trigger a new find if the search string has changed,
+--- like during live searches.
+function M:match()
   local pattern = vim.trim(self.input.filter.pattern)
   local search = vim.trim(self.input.filter.search)
   local needs_match = false
@@ -385,6 +389,11 @@ function M:filter()
   self.list:clear()
   self.matcher:run(self, { prios = prios })
   self:progress()
+end
+
+--- Get the current filter
+function M:filter()
+  return self.input.filter:clone()
 end
 
 return M
