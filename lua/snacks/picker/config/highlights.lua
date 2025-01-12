@@ -39,6 +39,13 @@ Snacks.util.set_hl({
   GitIssue = "Number",
   GitType = "Title", -- conventional commit type
   GitScope = "Italic", -- conventional commit scope
+  GitStatus = "NonText",
+  GitStatusAdded = "Added",
+  GitStatusModified = "Changed",
+  GitStatusDeleted = "Removed",
+  GitStatusRenamed = "SnacksPickerGitStatus",
+  GitStatusCopied = "SnacksPickerGitStatus",
+  GitStatusUntracked = "SnacksPickerGitStatus",
   ManSection = "Number",
   ManPage = "Special",
   -- LSP Symbol Kinds

@@ -74,4 +74,26 @@ function M.log(opts)
   }, opts or {}))
 end
 
+---@param opts snacks.picker.Config
+---@type snacks.picker.finder
+function M.status(opts)
+  local args = {
+    "status",
+    "--porcelain=v1",
+  }
+
+  local cwd = vim.fs.normalize(opts and opts.cwd or uv.cwd() or ".") or nil
+  return require("snacks.picker.source.proc").proc(vim.tbl_deep_extend("force", {
+    cmd = "git",
+    args = args,
+    ---@param item snacks.picker.finder.Item
+    transform = function(item)
+      local status, file = item.text:match("^%s*(%S+)%s+(.*)$")
+      item.cwd = cwd
+      item.status = status
+      item.file = file
+    end,
+  }, opts or {}))
+end
+
 return M

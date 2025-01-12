@@ -319,6 +319,25 @@ function M.keymap(item)
   return ret
 end
 
+function M.git_status(item)
+  local ret = {} ---@type snacks.picker.Highlights
+  local a = Snacks.picker.util.align
+  local s = vim.trim(item.status):sub(1, 1)
+  local hls = {
+    ["A"] = "SnacksPickerGitStatusAdded",
+    ["M"] = "SnacksPickerGitStatusModified",
+    ["D"] = "SnacksPickerGitStatusDeleted",
+    ["R"] = "SnacksPickerGitStatusRenamed",
+    ["C"] = "SnacksPickerGitStatusCopied",
+    ["?"] = "SnacksPickerGitStatusUntracked",
+  }
+  local hl = hls[s] or "SnacksPickerGitStatus"
+  ret[#ret + 1] = { a(item.status, 2, { align = "right" }), hl }
+  ret[#ret + 1] = { " " }
+  vim.list_extend(ret, M.filename(item))
+  return ret
+end
+
 function M.register(item)
   local ret = {} ---@type snacks.picker.Highlights
   ret[#ret + 1] = { " " }

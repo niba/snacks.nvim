@@ -160,6 +160,12 @@ M.git_log_line = {
   follow = true,
 }
 
+M.git_status = {
+  finder = "git_status",
+  format = "git_status",
+  previewer = "git_status",
+}
+
 ---@class snacks.picker.grep.Config: snacks.picker.proc.Config
 ---@field cmd? string
 ---@field hidden? boolean show hidden files

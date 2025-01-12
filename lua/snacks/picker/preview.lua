@@ -177,6 +177,28 @@ function M.git_show(ctx)
 end
 
 ---@param ctx snacks.picker.preview.ctx
+function M.git_diff(ctx)
+  local cmd = {
+    "git",
+    "-c",
+    "delta." .. vim.o.background .. "=true",
+    "diff",
+    ctx.item.file,
+  }
+  M.cmd(cmd, ctx)
+end
+
+---@param ctx snacks.picker.preview.ctx
+function M.git_status(ctx)
+  local s = vim.trim(ctx.item.status):sub(1, 1)
+  if s == "?" then
+    M.file(ctx)
+  else
+    M.git_diff(ctx)
+  end
+end
+
+---@param ctx snacks.picker.preview.ctx
 function M.colorscheme(ctx)
   if not ctx.preview.state.colorscheme then
     ctx.preview.state.colorscheme = vim.g.colors_name or "default"
