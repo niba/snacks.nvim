@@ -18,7 +18,9 @@ local M = {}
 function M.commands()
   local commands = vim.api.nvim_get_commands({})
   for k, v in pairs(vim.api.nvim_buf_get_commands(0, {})) do
-    commands[k] = v
+    if type(k) == "string" then -- fixes vim.empty_dict() bug
+      commands[k] = v
+    end
   end
   ---@async
   ---@param cb async fun(item: snacks.picker.finder.Item)
