@@ -84,10 +84,14 @@ function M.file(item, picker)
   return ret
 end
 
-function M.git_log(item)
+function M.git_log(item, picker)
+  local a = Snacks.picker.util.align
   local ret = {} ---@type snacks.picker.Highlights
+  ret[#ret + 1] = { picker.opts.icons.git.commit, "SnacksPickerGitCommit" }
   ret[#ret + 1] = { item.commit, "SnacksPickerGitCommit" }
   ret[#ret + 1] = { " " }
+  ret[#ret + 1] = { a(item.date, 16), "SnacksPickerGitDate" }
+
   local msg = item.msg ---@type string
   local type, scope, breaking, body = msg:match("^(%S+)(%(.-%))(!?):%s*(.*)$")
   if not type then
@@ -114,8 +118,6 @@ function M.git_log(item)
   Snacks.picker.highlight.highlight(ret, {
     ["#%d+"] = "SnacksPickerGitIssue",
   })
-  ret[#ret + 1] = { " " }
-  ret[#ret + 1] = { "(" .. item.date .. ")", "SnacksPickerGitDate" }
   return ret
 end
 

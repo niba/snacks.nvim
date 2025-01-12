@@ -188,6 +188,9 @@ local defaults = {
       selected = "● ",
       -- selected = " ",
     },
+    git = {
+      commit = "󰜘 ",
+    },
     diagnostics = {
       Error = " ",
       Warn = " ",

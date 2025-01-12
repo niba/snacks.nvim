@@ -26,6 +26,7 @@ function M.proc(opts)
         end
       end
     end
+    local aborted = false
     local stdout = assert(uv.new_pipe())
     opts = vim.tbl_deep_extend("force", {}, opts or {}, {
       stdio = { nil, stdout, nil },
@@ -35,6 +36,11 @@ function M.proc(opts)
 
     local handle ---@type uv.uv_process_t
     handle = uv.spawn(opts.cmd, opts, function(_code, _signal)
+      if not aborted and _code ~= 0 then
+        local full = { opts.cmd or "" }
+        vim.list_extend(full, opts.args or {})
+        return Snacks.notify.error(("Command failed:\n- cmd: `%s`"):format(table.concat(full, " ")))
+      end
       stdout:close()
       handle:close()
       self:resume()
@@ -46,7 +52,6 @@ function M.proc(opts)
     -- PERF: use jit string buffers to avoid string concatenation
     local prev = Buffer.new()
 
-    local aborted = false
     self:on("abort", function()
       aborted = true
       if not handle:is_closing() then

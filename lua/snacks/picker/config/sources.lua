@@ -131,12 +131,33 @@ M.git_files = {
   submodules = false,
 }
 
----@class snacks.picker.git.log.Config: snacks.picker.Config
 -- Git log
+---@class snacks.picker.git.log.Config: snacks.picker.Config
+---@field follow? boolean track file history across renames
+---@field current_file? boolean show current file log
+---@field current_line? boolean show current line log
 M.git_log = {
   finder = "git_log",
   format = "git_log",
   previewer = "git_show",
+}
+
+---@type snacks.picker.git.log.Config
+M.git_log_file = {
+  finder = "git_log",
+  format = "git_log",
+  previewer = "git_show",
+  current_file = true,
+  follow = true,
+}
+
+---@type snacks.picker.git.log.Config
+M.git_log_line = {
+  finder = "git_log",
+  format = "git_log",
+  previewer = "git_show",
+  current_line = true,
+  follow = true,
 }
 
 ---@class snacks.picker.grep.Config: snacks.picker.proc.Config
