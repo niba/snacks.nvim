@@ -337,10 +337,14 @@ function M:action(actions)
 end
 
 --- Clear the list and run the finder and matcher
-function M:find()
+---@param opts? {on_done?: fun()}
+function M:find(opts)
   self.list:clear()
   self.finder:run(self)
   self.matcher:run(self)
+  if opts and opts.on_done then
+    self.matcher.task:on("done", vim.schedule_wrap(opts.on_done))
+  end
   self:progress()
 end
 
