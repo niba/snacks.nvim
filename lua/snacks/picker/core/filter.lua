@@ -12,12 +12,13 @@ M.__index = M
 
 local uv = vim.uv or vim.loop
 
----@param opts snacks.picker.Config|{filter?:snacks.picker.filter.Config}
-function M.new(opts)
+---@param picker snacks.Picker
+function M.new(picker)
+  local opts = picker.opts ---@type snacks.picker.Config|{filter?:snacks.picker.filter.Config}
   local self = setmetatable({}, M)
   self.opts = opts.filter or {}
   local function gets(v)
-    return type(v) == "function" and v() or v or "" --[[@as string]]
+    return type(v) == "function" and v(picker) or v or "" --[[@as string]]
   end
   self.pattern = gets(opts.pattern)
   self.search = gets(opts.search)

@@ -22,6 +22,7 @@ Async.BUDGET = 20
 ---@field closed? boolean
 ---@field hist_idx number
 ---@field hist_cursor number
+---@field visual? snacks.picker.Visual
 local M = {}
 M.__index = M
 
@@ -51,6 +52,7 @@ function M.new(opts)
   if self.opts.source == "resume" then
     return M.resume()
   end
+  self.visual = Snacks.picker.util.visual()
   self.start_time = uv.hrtime()
   Snacks.picker.current = self
   self.parent_win = vim.api.nvim_get_current_win()
@@ -134,6 +136,11 @@ function M.new(opts)
 
   self:find()
   return self
+end
+
+-- Get the word under the cursor or the current visual selection
+function M:word()
+  return self.visual and self.visual.text or vim.fn.expand("<cword>")
 end
 
 function M:update_titles()

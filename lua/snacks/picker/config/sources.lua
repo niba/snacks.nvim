@@ -196,8 +196,8 @@ M.grep_buffers = {
 M.grep_word = {
   finder = "grep",
   format = "file",
-  search = function()
-    return Snacks.picker.util.word()
+  search = function(picker)
+    return picker:word()
   end,
   live = false,
   supports_live = true,

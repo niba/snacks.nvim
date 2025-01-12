@@ -15,7 +15,7 @@ function M.new(picker)
   local self = setmetatable({}, M)
   self.totals = ""
   self.picker = picker
-  self.filter = require("snacks.picker.core.filter").new(picker.opts)
+  self.filter = require("snacks.picker.core.filter").new(picker)
   self._statuscolumn = self:statuscolumn()
 
   self.win = Snacks.win(Snacks.win.resolve(picker.opts.win.input, {

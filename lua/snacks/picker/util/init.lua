@@ -39,16 +39,32 @@ function M.align(text, width, opts)
   return text .. (" "):rep(width - tw)
 end
 
--- Get the word under the cursor or the current visual selection
-function M.word()
-  if vim.fn.mode():find("v") then
-    local saved = vim.fn.getreg("v")
-    vim.cmd([[noautocmd sil norm! "vy]])
-    local ret = vim.fn.getreg("v")
-    vim.fn.setreg("v", saved)
-    return ret
+-- Stops visual mode and returns the selected text
+function M.visual()
+  local modes = { "v", "V", Snacks.util.keycode("<C-v>") }
+  local mode = vim.fn.mode():sub(1, 1) ---@type string
+  if not vim.tbl_contains(modes, mode) then
+    return
   end
-  return vim.fn.expand("<cword>")
+  -- stop visual mode
+  vim.cmd("normal! " .. mode)
+
+  local pos = vim.api.nvim_buf_get_mark(0, "<")
+  local end_pos = vim.api.nvim_buf_get_mark(0, ">")
+
+  -- for some reason, sometimes the column is off by one
+  -- see: https://github.com/folke/snacks.nvim/issues/190
+  local col_to = math.min(end_pos[2] + 1, #vim.api.nvim_buf_get_lines(0, end_pos[1] - 1, end_pos[1], false)[1])
+
+  local lines = vim.api.nvim_buf_get_text(0, pos[1] - 1, pos[2], end_pos[1] - 1, col_to, {})
+  local text = table.concat(lines, "\n")
+  ---@class snacks.picker.Visual
+  local ret = {
+    pos = pos,
+    end_pos = end_pos,
+    text = text,
+  }
+  return ret
 end
 
 ---@param str string

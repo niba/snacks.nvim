@@ -49,8 +49,8 @@ local M = {}
 
 ---@class snacks.picker.Config
 ---@field prompt? string
----@field pattern? string|fun():string Pattern used to filter items by the matcher
----@field search? string|fun():string Initial search string used by finders
+---@field pattern? string|fun(picker:snacks.Picker):string Pattern used to filter items by the matcher
+---@field search? string|fun(picker:snacks.Picker):string Initial search string used by finders
 ---@field cwd? string
 ---@field live? boolean
 ---@field limit? number when set, the finder will stop after finding this number of items. useful for live searches
