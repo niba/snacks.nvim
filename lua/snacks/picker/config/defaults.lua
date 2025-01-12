@@ -146,6 +146,9 @@ local defaults = {
         ["<a-i>"] = { "toggle_ignored", mode = { "i", "n" } },
         ["<a-h>"] = { "toggle_hidden", mode = { "i", "n" } },
       },
+      b = {
+        minipairs_disable = true,
+      },
     },
     preview = {
       minimal = false,
