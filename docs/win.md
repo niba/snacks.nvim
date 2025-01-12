@@ -203,6 +203,7 @@ docs for more information on how to customize these styles
 ---@field backdrop? snacks.win
 ---@field keys snacks.win.Keys[]
 ---@field events (snacks.win.Event|{event:string|string[]})[]
+---@field meta table<string, string>
 Snacks.win = {}
 ```
 
@@ -336,11 +337,25 @@ win:parent_size()
 win:redraw()
 ```
 
+### `win:scratch()`
+
+```lua
+win:scratch()
+```
+
 ### `win:scroll()`
 
 ```lua
 ---@param up? boolean
 win:scroll(up)
+```
+
+### `win:set_title()`
+
+```lua
+---@param title string
+---@param pos? "center"|"left"|"right"
+win:set_title(title, pos)
 ```
 
 ### `win:show()`

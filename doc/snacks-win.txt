@@ -31,7 +31,9 @@ Table of Contents                               *snacks-win-table-of-contents*
   - win:on()                                      |snacks-win-module-win:on()|
   - win:parent_size()                    |snacks-win-module-win:parent_size()|
   - win:redraw()                              |snacks-win-module-win:redraw()|
+  - win:scratch()                            |snacks-win-module-win:scratch()|
   - win:scroll()                              |snacks-win-module-win:scroll()|
+  - win:set_title()                        |snacks-win-module-win:set_title()|
   - win:show()                                  |snacks-win-module-win:show()|
   - win:size()                                  |snacks-win-module-win:size()|
   - win:text()                                  |snacks-win-module-win:text()|
@@ -256,6 +258,7 @@ SPLIT                                                *snacks-win-styles-split*
     ---@field backdrop? snacks.win
     ---@field keys snacks.win.Keys[]
     ---@field events (snacks.win.Event|{event:string|string[]})[]
+    ---@field meta table<string, string>
     Snacks.win = {}
 <
 
@@ -409,11 +412,27 @@ WIN:REDRAW()                                  *snacks-win-module-win:redraw()*
 <
 
 
+WIN:SCRATCH()                                *snacks-win-module-win:scratch()*
+
+>lua
+    win:scratch()
+<
+
+
 WIN:SCROLL()                                  *snacks-win-module-win:scroll()*
 
 >lua
     ---@param up? boolean
     win:scroll(up)
+<
+
+
+WIN:SET_TITLE()                            *snacks-win-module-win:set_title()*
+
+>lua
+    ---@param title string
+    ---@param pos? "center"|"left"|"right"
+    win:set_title(title, pos)
 <
 
 

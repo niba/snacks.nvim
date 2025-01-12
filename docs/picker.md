@@ -146,7 +146,7 @@
       {
         box = "vertical",
         border = "rounded",
-        title = " {source} ",
+        title = "{source} {live}",
         title_pos = "center",
         width = 0.5,
         { win = "input", height = 1, border = "bottom" },
@@ -158,6 +158,7 @@
   ---@class snacks.picker.icons
   icons = {
     ui = {
+      live = "󰐰 ",
       selected = "● ",
       -- selected = " ",
     },
@@ -394,8 +395,7 @@ picker:debug(name, start)
 ### `picker:filter()`
 
 ```lua
----@param pattern string
-picker:filter(pattern)
+picker:filter()
 ```
 
 ### `picker:find()`
@@ -409,6 +409,12 @@ picker:find()
 ```lua
 ---@param forward? boolean
 picker:hist(forward)
+```
+
+### `picker:hist_record()`
+
+```lua
+picker:hist_record()
 ```
 
 ### `picker:is_active()`
@@ -453,6 +459,12 @@ picker:show_preview()
 
 ```lua
 picker:update()
+```
+
+### `picker:update_titles()`
+
+```lua
+picker:update_titles()
 ```
 
 
