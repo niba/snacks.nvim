@@ -6,7 +6,7 @@ function M.severity(item, picker)
   local ret = {} ---@type snacks.picker.Highlights
   local severity = item.severity
   severity = type(severity) == "number" and vim.diagnostic.severity[severity] or severity
-  if not severity then
+  if not severity or type(severity) == "number" then
     return ret
   end
   ---@cast severity string
