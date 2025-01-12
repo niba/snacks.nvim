@@ -103,20 +103,23 @@ function M.jumps()
   local jumps = vim.fn.getjumplist()[1]
   local items = {} ---@type snacks.picker.finder.Item[]
   for _, jump in ipairs(jumps) do
-    local file = jump.filename or vim.api.nvim_buf_get_name(jump.bufnr)
-    local line ---@type string?
-    if vim.api.nvim_buf_is_valid(jump.bufnr) then
-      line = vim.api.nvim_buf_get_lines(jump.bufnr, jump.lnum - 1, jump.lnum, false)[1]
+    local buf = jump.bufnr and vim.api.nvim_buf_is_valid(jump.bufnr) and jump.bufnr or 0
+    local file = jump.filename or buf and vim.api.nvim_buf_get_name(buf) or nil
+    if buf or file then
+      local line ---@type string?
+      if buf then
+        line = vim.api.nvim_buf_get_lines(buf, jump.lnum - 1, jump.lnum, false)[1]
+      end
+      local label = tostring(#jumps - #items)
+      table.insert(items, 1, {
+        label = Snacks.picker.util.align(label, #tostring(#jumps), "right"),
+        buf = buf,
+        line = line,
+        text = table.concat({ file, line }, " "),
+        file = file,
+        pos = jump.lnum and jump.lnum > 0 and { jump.lnum, jump.col } or nil,
+      })
     end
-    local label = tostring(#jumps - #items)
-    table.insert(items, 1, {
-      label = string.rep(" ", #tostring(#jumps) - #label) .. label,
-      buf = jump.bufnr,
-      line = line,
-      text = table.concat({ file, line }, " "),
-      file = file,
-      pos = { jump.lnum, jump.col },
-    })
   end
   return items
 end
