@@ -38,7 +38,14 @@ local function get_cmd(opts, filter)
     args[#args + 1] = "-L"
   end
 
-  -- file glob
+  local glob = type(opts.glob) == "table" and opts.glob or { opts.glob }
+  ---@cast glob string[]
+  for _, g in ipairs(glob) do
+    args[#args + 1] = "-g"
+    args[#args + 1] = g
+  end
+
+  -- search pattern
   table.insert(args, filter.search)
 
   -- dirs

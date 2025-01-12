@@ -145,6 +145,7 @@ M.git_log = {
 ---@field ignored? boolean show ignored files
 ---@field dirs? string[] directories to search
 ---@field follow? boolean follow symlinks
+---@field glob? string|string[] glob file pattern(s)
 M.grep = {
   finder = "grep",
   format = "file",
