@@ -146,10 +146,22 @@ M.git_log = {
 ---@field dirs? string[] directories to search
 ---@field follow? boolean follow symlinks
 ---@field glob? string|string[] glob file pattern(s)
+---@field buffers? boolean search in open buffers
+---@field need_search? boolean require a search pattern
 M.grep = {
   finder = "grep",
   format = "file",
   live = true, -- live grep by default
+  supports_live = true,
+}
+
+---@type snacks.picker.grep.Config
+M.grep_buffers = {
+  finder = "grep",
+  format = "file",
+  live = true,
+  buffers = true,
+  need_search = false,
   supports_live = true,
 }
 
