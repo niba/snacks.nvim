@@ -445,21 +445,30 @@ function M:open_buf()
   elseif self.opts.buf then
     self.buf = self.opts.buf
   else
-    self.buf = vim.api.nvim_create_buf(false, true)
-    vim.bo[self.buf].bufhidden = "wipe"
-    vim.bo[self.buf].swapfile = false
-    self.scratch_buf = self.buf
-    local text = type(self.opts.text) == "function" and self.opts.text() or self.opts.text
-    text = type(text) == "string" and { text } or text
-    if text then
-      ---@cast text string[]
-      vim.api.nvim_buf_set_lines(self.buf, 0, -1, false, text)
-    end
+    self:scratch()
+  end
+  return self.buf
+end
+
+function M:scratch()
+  if self.buf == self.scratch_buf and self:buf_valid() then
+    return
+  end
+  self.buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[self.buf].swapfile = false
+  self.scratch_buf = self.buf
+  local text = type(self.opts.text) == "function" and self.opts.text() or self.opts.text
+  text = type(text) == "string" and { text } or text
+  if text then
+    ---@cast text string[]
+    vim.api.nvim_buf_set_lines(self.buf, 0, -1, false, text)
   end
   if vim.bo[self.buf].filetype == "" and not self.opts.bo.filetype then
     self.opts.bo.filetype = "snacks_win"
   end
-  return self.buf
+  if self:win_valid() then
+    vim.api.nvim_win_set_buf(self.win, self.buf)
+  end
 end
 
 ---@private
