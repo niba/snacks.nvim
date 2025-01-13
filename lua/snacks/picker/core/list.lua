@@ -260,11 +260,11 @@ function M:select()
   if not item then
     return
   end
-  local key = item.text
+  local key = self:select_key(item)
   if self.selected_map[key] then
     self.selected_map[key] = nil
     self.selected = vim.tbl_filter(function(v)
-      return v.text ~= item.text
+      return self:select_key(v) ~= key
     end, self.selected)
   else
     self.selected_map[key] = item
@@ -275,12 +275,20 @@ function M:select()
   self:render()
 end
 
+---@param item snacks.picker.Item
+---@return string
+function M:select_key(item)
+  item._select_key = item._select_key
+    or Snacks.picker.util.text(item, { "text", "file", "key", "id", "pos", "end_pos" })
+  return item._select_key
+end
+
 ---@param items snacks.picker.Item[]
 function M:set_selected(items)
   self.selected = items
   self.selected_map = {}
   for _, item in ipairs(items) do
-    self.selected_map[item.text] = item
+    self.selected_map[self:select_key(item)] = item
   end
   self.picker.input:update()
   self.dirty = true
@@ -300,7 +308,7 @@ function M:format(item)
   local line = self.picker.format(item, self.picker)
   local parts = {} ---@type string[]
   local ret = {} ---@type snacks.picker.Extmark[]
-  local selected = self.selected_map[item.text] ~= nil
+  local selected = self.selected_map[self:select_key(item)] ~= nil
 
   local selw = vim.api.nvim_strwidth(self.picker.opts.icons.ui.selected)
   parts[#parts + 1] = string.rep(" ", selw)

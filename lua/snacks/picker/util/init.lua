@@ -18,7 +18,11 @@ function M.text(item, keys)
       if #buffer > 0 then
         buffer:put(" ")
       end
-      buffer:put(tostring(item[key]))
+      if key == "pos" or key == "end_pos" then
+        buffer:putf("%d:%d", item[key][1], item[key][2])
+      else
+        buffer:put(tostring(item[key]))
+      end
     end
   end
   return buffer:get()
