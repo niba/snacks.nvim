@@ -139,6 +139,7 @@ M.git_log = {
   finder = "git_log",
   format = "git_log",
   previewer = "git_show",
+  actions = { confirm = "close" },
 }
 
 ---@type snacks.picker.git.log.Config
@@ -148,6 +149,7 @@ M.git_log_file = {
   previewer = "git_show",
   current_file = true,
   follow = true,
+  actions = { confirm = "close" },
 }
 
 ---@type snacks.picker.git.log.Config
@@ -157,6 +159,7 @@ M.git_log_line = {
   previewer = "git_show",
   current_line = true,
   follow = true,
+  actions = { confirm = "close" },
 }
 
 M.git_status = {
