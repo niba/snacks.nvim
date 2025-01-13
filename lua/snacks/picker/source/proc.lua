@@ -10,6 +10,7 @@ local uv = vim.uv or vim.loop
 ---@field args? string[]
 ---@field env? table<string, string>
 ---@field cwd? string
+---@field notify? boolean Notify on failure
 ---@field transform? fun(item: snacks.picker.finder.Item): boolean?
 
 ---@param opts snacks.picker.proc.Config
@@ -31,12 +32,12 @@ function M.proc(opts)
     opts = vim.tbl_deep_extend("force", {}, opts or {}, {
       stdio = { nil, stdout, nil },
       cwd = opts.cwd and vim.fs.normalize(opts.cwd) or nil,
-    })
+    }) --[[@as snacks.picker.proc.Config]]
     local self = Async.running()
 
     local handle ---@type uv.uv_process_t
-    handle = uv.spawn(opts.cmd, opts, function(_code, _signal)
-      if not aborted and _code ~= 0 then
+    handle = uv.spawn(opts.cmd, opts, function(code, _signal)
+      if not aborted and code ~= 0 and opts.notify ~= false then
         local full = { opts.cmd or "" }
         vim.list_extend(full, opts.args or {})
         return Snacks.notify.error(("Command failed:\n- cmd: `%s`"):format(table.concat(full, " ")))

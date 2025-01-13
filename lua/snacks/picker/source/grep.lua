@@ -83,6 +83,7 @@ function M.grep(opts, filter)
   local cwd = not absolute and vim.fs.normalize(opts and opts.cwd or uv.cwd() or ".") or nil
   local cmd, args = get_cmd(opts, filter)
   return require("snacks.picker.source.proc").proc(vim.tbl_deep_extend("force", {
+    notify = false,
     cmd = cmd,
     args = args,
     ---@param item snacks.picker.finder.Item
