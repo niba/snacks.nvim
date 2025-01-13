@@ -30,7 +30,9 @@ end
 --- Resolve the layout configuration
 ---@param opts snacks.picker.Config|string
 function M.layout(opts)
-  opts = type(opts) == "string" and { layout = { preset = opts } } or opts
+  if type(opts) == "string" then
+    opts = M.get({ layout = { preset = opts } })
+  end
   local layouts = require("snacks.picker.config.layouts")
   local layout = M.resolve(opts.layout or {}, opts.source)
   if layout.layout then
