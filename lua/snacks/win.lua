@@ -828,6 +828,10 @@ end
 
 ---@private
 function M:drop()
+  if self.backdrop then
+    self.backdrop:close()
+    self.backdrop = nil
+  end
   local backdrop = self.opts.backdrop
   if not backdrop then
     return
