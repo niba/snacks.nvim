@@ -45,18 +45,20 @@ M.telescope = {
 
 M.ivy = {
   layout = {
+    box = "vertical",
     backdrop = false,
     row = -1,
     width = 0,
     height = 0.4,
-    border = "none",
-    box = "horizontal",
+    border = "top",
+    title = " {source} {live}",
+    title_pos = "left",
+    { win = "input", height = 1, border = "bottom" },
     {
-      box = "vertical",
-      { win = "input", height = 1, border = "none" },
+      box = "horizontal",
       { win = "list", border = "none" },
+      { win = "preview", width = 0.6, border = "left" },
     },
-    { win = "preview", width = 0.6, border = "left" },
   },
 }
 
