@@ -9,6 +9,7 @@
 ---@field keys snacks.win.Keys[]
 ---@field events (snacks.win.Event|{event:string|string[]})[]
 ---@field meta table<string, string>
+---@field closed? boolean
 ---@overload fun(opts? :snacks.win.Config|{}): snacks.win
 local M = setmetatable({}, {
   __call = function(t, ...)
@@ -501,6 +502,7 @@ function M:close(opts)
   if vim.tbl_contains(event_stack, "WinClosed") or not pcall(close) then
     vim.schedule(try_close)
   end
+  self:on_close()
 end
 
 function M:hide()
@@ -699,6 +701,7 @@ function M:show()
   end
 
   self:open_win()
+  self.closed = false
   -- window local variables
   for k, v in pairs(self.opts.w or {}) do
     vim.w[self.win][k] = v
@@ -802,6 +805,10 @@ function M:on_close()
     self.backdrop:close()
     self.backdrop = nil
   end
+  if self.closed then
+    return
+  end
+  self.closed = true
   if self.opts.on_close then
     self.opts.on_close(self)
   end
