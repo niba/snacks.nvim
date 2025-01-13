@@ -123,15 +123,26 @@ end
 
 function M.lsp_symbol(item, picker)
   local ret = {} ---@type snacks.picker.Highlights
+  if item.hierarchy then
+    local indents = picker.opts.icons.indent
+    local indent = {}
+    if item.depth == 1 then
+      indent = { item.last and indents.last or indents.middle }
+    else
+      indent = { indents.top, string.rep(" ", item.depth * 2 - 4), item.last and indents.last or indents.middle }
+    end
+    ret[#ret + 1] = { table.concat(indent), "SnacksPickerIndent" }
+  end
   local kind = item.kind or "Unknown" ---@type string
   local kind_hl = "SnacksPickerIcon" .. kind
   ret[#ret + 1] = { picker.opts.icons.kinds[kind], kind_hl }
   ret[#ret + 1] = { " " }
-  ret[#ret + 1] = { kind:lower() .. string.rep(" ", 10 - #kind), kind_hl }
-  ret[#ret + 1] = { " " }
+  -- ret[#ret + 1] = { kind:lower() .. string.rep(" ", 10 - #kind), kind_hl }
+  -- ret[#ret + 1] = { " " }
   local name = vim.trim(item.name:gsub("\r?\n", " "))
   name = name == "" and item.detail or name
-  ret[#ret + 1] = { name }
+  Snacks.picker.highlight.format(item, name, ret)
+  -- ret[#ret + 1] = { name }
   return ret
 end
 

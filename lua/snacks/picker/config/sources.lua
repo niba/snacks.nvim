@@ -314,10 +314,12 @@ M.lsp_references = {
 
 -- LSP document symbols
 ---@class snacks.picker.lsp.symbols.Config: snacks.picker.Config
+---@field hierarchy? boolean show symbol hierarchy
 ---@field filter table<string, string[]|boolean>? symbol kind filter
 M.lsp_symbols = {
   finder = "lsp_symbols",
   format = "lsp_symbol",
+  hierarchy = true,
   filter = {
     default = {
       "Class",

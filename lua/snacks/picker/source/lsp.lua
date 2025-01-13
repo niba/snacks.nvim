@@ -231,14 +231,19 @@ function M.results_to_items(client, results, opts)
     ranges[loc] = i
   end
 
+  local last = {} ---@type table<snacks.picker.finder.Item, snacks.picker.finder.Item>
+
   ---@param result lsp.ResultItem
-  local function add(result)
+  ---@param parent snacks.picker.finder.Item
+  local function add(result, parent)
     local loc = processed[result].loc
     local sym = ranges[loc]
+    ---@type snacks.picker.finder.Item?
+    local item
     if sym then
-      ---@type snacks.picker.finder.Item
-      local item = {
+      item = {
         kind = M.symbol_kind(result.kind),
+        depth = (parent.depth or 0) + 1,
         detail = result.detail,
         name = result.name,
         text = table.concat({ M.symbol_kind(result.kind), result.name, result.detail }, " "),
@@ -247,17 +252,24 @@ function M.results_to_items(client, results, opts)
         pos = { sym.lnum, sym.col },
         end_pos = sym.end_lnum and sym.end_col and { sym.end_lnum, sym.end_col },
       }
-
+      last[parent] = item
       items[#items + 1] = item
+      parent = item
     end
     for _, child in ipairs(result.children or {}) do
-      add(child)
+      add(child, parent)
     end
     result.children = nil
   end
 
+  ---@type snacks.picker.finder.Item
+  local root = { depth = 0, text = "" }
   for _, result in ipairs(results) do
-    add(result)
+    add(result, root)
+  end
+
+  for _, item in pairs(last) do
+    item.last = true
   end
 
   return items
@@ -289,9 +301,10 @@ function M.symbols(opts)
           return want(M.symbol_kind(item.kind))
         end,
       })
-      for _, sym in ipairs(items) do
+      for _, item in ipairs(items) do
+        item.hierarchy = opts.hierarchy
         ---@diagnostic disable-next-line: await-in-sync
-        cb(sym)
+        cb(item)
       end
     end)
   end

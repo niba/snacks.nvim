@@ -177,10 +177,16 @@ local defaults = {
     },
   },
   ---@class snacks.picker.icons
+    -- stylua: ignore
   icons = {
+    indent = {
+      top    = "│ ",
+      middle = "├╴",
+      last   = "└╴",
+    },
     ui = {
-      live = "󰐰 ",
-      selected = "● ",
+      live        = "󰐰 ",
+      selected    = "● ",
       -- selected = " ",
     },
     git = {
@@ -188,11 +194,10 @@ local defaults = {
     },
     diagnostics = {
       Error = " ",
-      Warn = " ",
-      Hint = " ",
-      Info = " ",
+      Warn  = " ",
+      Hint  = " ",
+      Info  = " ",
     },
-    -- stylua: ignore
     kinds = {
       Array         = " ",
       Boolean       = "󰨙 ",

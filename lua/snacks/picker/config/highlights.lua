@@ -20,6 +20,7 @@ Snacks.util.set_hl({
   Selected = "Number",
   Idx = "Number",
   Bold = "Bold",
+  Indent = "LineNr",
   Italic = "Italic",
   Code = "@markup.raw.markdown_inline",
   AuPattern = "String",
