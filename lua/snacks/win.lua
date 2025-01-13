@@ -490,11 +490,13 @@ function M:close(opts)
       self.augroup = nil
     end
   end
-  local try_close
+  local try_close ---@type fun()
   try_close = function()
     local ok, err = pcall(close)
     if not ok and err and err:find("E565") then
       vim.defer_fn(try_close, 50)
+    elseif not ok then
+      Snacks.notify.error("Failed to close window: " .. err)
     end
   end
   vim.schedule(try_close)
