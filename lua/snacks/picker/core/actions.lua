@@ -78,11 +78,12 @@ function M.resolve(action, picker, name)
     desc = name or nil,
   } or action
   ---@cast action snacks.picker.Action
-  local fn = action.action
-  action.action = function()
-    return fn(picker, picker:current())
-  end
-  return action
+  return {
+    action = function(_, item)
+      return action.action(picker, item)
+    end,
+    desc = action.desc,
+  }
 end
 
 return M
