@@ -164,6 +164,12 @@ function M:update_layout(layout)
     -- no need to update
     return
   end
+  if self.list.reverse ~= layout.reverse then
+    Snacks.notify.warn(
+      "Heads up! This layout changed the list order,\nso `up` goes down and `down` goes up.",
+      { title = "Snacks Picker" }
+    )
+  end
   self.layout:close({ wins = false })
   self:init_layout(layout)
   self.layout:show()
