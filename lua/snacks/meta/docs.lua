@@ -155,7 +155,12 @@ function M.extract(lines, opts)
   }
 
   for _, c in ipairs(parse.captures) do
-    if c.comment:find("@private") then
+    if
+      c.comment:find("@private")
+      or c.comment:find("@protected")
+      or c.comment:find("@package")
+      or c.comment:find("@hide")
+    then
       -- skip private
     elseif c.name == "local" then
       if vim.tbl_contains({ "defaults", "config" }, c.fields.name) then
