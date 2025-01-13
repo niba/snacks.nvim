@@ -259,6 +259,10 @@ M.keymaps = {
 M.lines = {
   finder = "lines",
   format = "lines",
+  layout = {
+    preview = "main",
+    preset = "ivy",
+  },
 }
 
 -- Loclist
