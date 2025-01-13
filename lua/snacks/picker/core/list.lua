@@ -31,7 +31,7 @@ end
 ---@param picker snacks.Picker
 function M.new(picker)
   local self = setmetatable({}, M)
-  self.reverse = picker.opts.win.list.reverse
+  self.reverse = picker.opts.layout.reverse
   self.picker = picker
   self.selected = {}
   self.selected_map = {}
@@ -74,6 +74,13 @@ function M.new(picker)
     self.state.height = vim.api.nvim_win_get_height(self.win.win)
     self.dirty = true
     self:update()
+  end)
+  self.win:on("WinResized", function()
+    if vim.tbl_contains(vim.v.event.windows, self.win.win) then
+      self.state.height = vim.api.nvim_win_get_height(self.win.win)
+      self.dirty = true
+      self:update()
+    end
   end)
 
   return self
@@ -415,8 +422,8 @@ function M:render()
     self._current = current
     if not self.did_preview then
       -- show first preview instantly
-      self.picker:show_preview()
       self.did_preview = true
+      self.picker:show_preview()
     else
       vim.schedule(function()
         self.picker:show_preview()

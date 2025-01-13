@@ -10,6 +10,7 @@ Async.BUDGET = 20
 ---@field format snacks.picker.Formatter
 ---@field input snacks.picker.input
 ---@field layout snacks.layout
+---@field resolved_layout snacks.picker.Layout
 ---@field list snacks.picker.list
 ---@field matcher snacks.picker.Matcher
 ---@field parent_win number
@@ -69,11 +70,7 @@ function M.new(opts)
   self.matcher = require("snacks.picker.core.matcher").new(self.opts.matcher)
 
   self.finder = Finder.new(Snacks.picker.config.finder(self.opts.finder) or function()
-    return function(cb)
-      for _, it in ipairs(self.opts.items or {}) do
-        cb(it)
-      end
-    end
+    return self.opts.items or {}
   end)
 
   local format = type(self.opts.format) == "string" and Snacks.picker.format[self.opts.format]
@@ -88,25 +85,6 @@ function M.new(opts)
   self.list = require("snacks.picker.core.list").new(self)
   self.input = require("snacks.picker.core.input").new(self)
   self.preview = require("snacks.picker.core.preview").new(self.opts)
-
-  self.layout = Snacks.layout.new(vim.tbl_deep_extend("force", self.opts.layout or {}, {
-    win = {
-      wo = {
-        winhighlight = Snacks.picker.highlight.winhl("SnacksPicker"),
-      },
-    },
-    wins = {
-      input = self.input.win,
-      list = self.list.win,
-      preview = self.preview.win,
-    },
-  }))
-
-  -- apply box highlight groups
-  local boxwhl = Snacks.picker.highlight.winhl("SnacksPickerBox")
-  for _, win in pairs(self.layout.box_wins) do
-    win.opts.wo.winhighlight = boxwhl
-  end
 
   M.last = {
     opts = self.opts,
@@ -129,13 +107,68 @@ function M.new(opts)
     end
   end)
 
+  self:init_layout()
+  self.input.win:on("VimResized", function()
+    vim.schedule(function()
+      local layout = Snacks.picker.config.layout(self.opts)
+      self:update_layout(layout)
+    end)
+  end)
+
   local show_preview = self.show_preview
   self.show_preview = Snacks.util.throttle(function()
     show_preview(self)
-  end, { ms = 60 })
+  end, { ms = 60, name = "preview" })
 
   self:find()
   return self
+end
+
+---@param layout? snacks.picker.Layout
+function M:init_layout(layout)
+  layout = layout or Snacks.picker.config.layout(self.opts)
+  self.resolved_layout = vim.deepcopy(layout)
+  local opts = layout --[[@as snacks.layout.Config]]
+  self.layout = Snacks.layout.new(vim.tbl_deep_extend("force", opts, {
+    win = {
+      wo = {
+        winhighlight = Snacks.picker.highlight.winhl("SnacksPicker"),
+      },
+    },
+    wins = {
+      input = self.input.win,
+      list = self.list.win,
+      preview = self.preview.win,
+    },
+    hidden = { layout.preview == false and "preview" or nil },
+    on_update = function()
+      self:update_titles()
+    end,
+  }))
+  -- apply box highlight groups
+  local boxwhl = Snacks.picker.highlight.winhl("SnacksPickerBox")
+  for _, win in pairs(self.layout.box_wins) do
+    win.opts.wo.winhighlight = boxwhl
+  end
+  return layout
+end
+
+---@param layout? string|snacks.picker.Layout
+function M:update_layout(layout)
+  layout = layout or Snacks.picker.config.layout(self.opts)
+  layout = type(layout) == "string" and Snacks.picker.config.layout(layout) or layout
+  ---@cast layout snacks.picker.Layout
+  if vim.deep_equal(layout, self.resolved_layout) then
+    -- no need to update
+    return
+  end
+  self.layout:close({ wins = false })
+  self:init_layout(layout)
+  self.layout:show()
+  self.list.reverse = layout.reverse
+  self.list.dirty = true
+  self.list:update()
+  self.input:update()
 end
 
 -- Get the word under the cursor or the current visual selection
@@ -148,7 +181,7 @@ function M:update_titles()
     source = self.source_name,
     live = self.opts.live and self.opts.icons.ui.live or "",
   }
-  local wins = { self.layout.win }
+  local wins = { self.layout.root }
   vim.list_extend(wins, vim.tbl_values(self.layout.wins))
   vim.list_extend(wins, vim.tbl_values(self.layout.box_wins))
   for _, win in pairs(wins) do
@@ -187,6 +220,9 @@ function M:debug(name, start)
 end
 
 function M:show_preview()
+  if self.opts.on_moved then
+    self.opts.on_moved(self, self:current())
+  end
   if not self.preview.win:valid() then
     return
   end
@@ -199,7 +235,6 @@ function M:show()
   end
   self.shown = true
   self.layout:show()
-  self:update_titles()
   self.input.win:focus()
 end
 

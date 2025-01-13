@@ -129,7 +129,9 @@ function M.lsp_symbol(item, picker)
   ret[#ret + 1] = { " " }
   ret[#ret + 1] = { kind:lower() .. string.rep(" ", 10 - #kind), kind_hl }
   ret[#ret + 1] = { " " }
-  ret[#ret + 1] = { item.name:gsub("\r?\n", " ") }
+  local name = vim.trim(item.name:gsub("\r?\n", " "))
+  name = name == "" and item.detail or name
+  ret[#ret + 1] = { name }
   return ret
 end
 

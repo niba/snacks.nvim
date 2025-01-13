@@ -21,15 +21,6 @@ M.meta = {
   desc = "Create and manage floating windows or splits",
 }
 
----@class snacks.win.Event.callback.args
----@field id number
----@field event string
----@field group number?
----@field match string
----@field buf number
----@field file string
----@field data any
-
 ---@class snacks.win.Keys: vim.api.keyset.keymap
 ---@field [1]? string
 ---@field [2]? string|string[]|fun(self: snacks.win): string?
@@ -38,7 +29,7 @@ M.meta = {
 ---@class snacks.win.Event: vim.api.keyset.create_autocmd
 ---@field buf? true
 ---@field win? true
----@field callback? fun(self: snacks.win, ev: snacks.win.Event.callback.args)
+---@field callback? fun(self: snacks.win, ev:vim.api.keyset.create_autocmd.callback_args):boolean?
 
 ---@class snacks.win.Backdrop
 ---@field bg? string
@@ -403,7 +394,7 @@ function M:toggle_help(opts)
 end
 
 ---@param event string|string[]
----@param cb fun(self: snacks.win)
+---@param cb fun(self: snacks.win, ev:vim.api.keyset.create_autocmd.callback_args):boolean?
 ---@param opts? snacks.win.Event
 function M:on(event, cb, opts)
   opts = opts or {}
@@ -426,7 +417,7 @@ function M:_on(event, opts)
   end
   event_opts.group = event_opts.group or self.augroup
   event_opts.callback = function(ev)
-    opts.callback(self, ev)
+    return opts.callback(self, ev)
   end
   if event_opts.pattern or event_opts.buffer then
     -- don't alter the pattern or buffer
@@ -467,13 +458,6 @@ function M:close(opts)
   local win = self.win
   local buf = wipe and self.buf
 
-  -- never close modified buffers
-  if buf and vim.bo[buf].modified and vim.bo[buf].buftype == "" then
-    if not pcall(vim.api.nvim_buf_delete, buf, { force = false }) then
-      return
-    end
-  end
-
   self.win = nil
   if buf then
     self.buf = nil
@@ -490,10 +474,12 @@ function M:close(opts)
       self.augroup = nil
     end
   end
+  local retries = 0
   local try_close ---@type fun()
   try_close = function()
     local ok, err = pcall(close)
-    if not ok and err and err:find("E565") then
+    if not ok and err and err:find("E565") and retries < 10 then
+      retries = retries + 1
       vim.defer_fn(try_close, 50)
     elseif not ok then
       Snacks.notify.error("Failed to close window: " .. err)

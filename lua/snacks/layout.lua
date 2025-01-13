@@ -1,9 +1,10 @@
 ---@class snacks.layout
 ---@field opts snacks.layout.Config
----@field win snacks.win
+---@field root snacks.win
 ---@field wins table<string, snacks.win|{enabled?:boolean}>
 ---@field box_wins snacks.win[]
 ---@field win_opts table<string, snacks.win.Config>
+---@field closed? boolean
 local M = {}
 M.__index = M
 
@@ -11,25 +12,11 @@ M.meta = {
   desc = "Window layouts",
 }
 
----@class snacks.layout.Dim: snacks.win.Dim
----@field depth number
-
----@class snacks.layout.Base
----@field width? number
----@field min_width? number
----@field max_width? number
----@field height? number
----@field min_height? number
----@field max_height? number
----@field col? number
----@field row? number
----@field border? string
+---@class snacks.layout.Win: snacks.win.Config,{}
 ---@field depth? number
-
----@class snacks.layout.Win: snacks.layout.Base, snacks.win.Config,{}
 ---@field win string
 
----@class snacks.layout.Box: snacks.layout.Base
+---@class snacks.layout.Box: snacks.layout.Win,{}
 ---@field box "horizontal" | "vertical"
 ---@field id? number
 ---@field [number] snacks.layout.Win | snacks.layout.Box
@@ -37,11 +24,13 @@ M.meta = {
 ---@alias snacks.layout.Widget snacks.layout.Win | snacks.layout.Box
 
 ---@class snacks.layout.Config
----@field win? snacks.words.Config|{}
 ---@field wins table<string, snacks.win>
 ---@field layout snacks.layout.Box
+---@field fullscreen? boolean open in fullscreen
+---@field hidden? string[] list of windows that will be excluded from the layout
+---@field on_update? fun(layout: snacks.layout)
 local defaults = {
-  win = {
+  layout = {
     width = 0.6,
     height = 0.6,
     zindex = 50,
@@ -51,102 +40,175 @@ local defaults = {
 ---@param opts snacks.layout.Config
 function M.new(opts)
   local self = setmetatable({}, M)
-  self.opts = opts
+  self.opts = vim.tbl_extend("force", defaults, opts)
   self.win_opts = {}
   self.wins = self.opts.wins or {}
-  local win_opts = Snacks.win.resolve(defaults.win, opts.win, {
-    show = false,
-    focusable = false,
-    enter = false,
-  })
-  self.win = Snacks.win(win_opts)
+  self.box_wins = {}
 
   -- assign ids to boxes and create box wins if needed
-  self.box_wins = {}
   local id = 1
-
-  self:each(function(box)
-    ---@cast box snacks.layout.Box
-    box.id, id = id, id + 1
-    if box.border and box.border ~= "" and box.border ~= "none" then
-      self.box_wins[box.id] = Snacks.win(Snacks.win.resolve(box, {
-        focusable = false,
-        enter = false,
-        show = false,
-        relative = "win",
-        backdrop = false,
-        zindex = self.win.opts.zindex + box.depth,
-        border = box.border,
-      }))
-    end
-  end, { wins = false })
-
-  for w, win in pairs(self.wins) do
-    self.win_opts[w] = vim.deepcopy(win.opts)
-    win:on("WinClosed", function()
-      self:close()
-    end, { win = true })
-  end
-  self.win:on("VimResized", function()
-    self.win:update()
-    self:update()
-    for _, win in pairs(self.wins) do
-      if win.enabled then
-        win:update()
+  self:each(function(box, parent)
+    box.depth = (parent and parent.depth + 1) or 0
+    if box.box then
+      ---@cast box snacks.layout.Box
+      box.id, id = id, id + 1
+      local has_border = box.border and box.border ~= "" and box.border ~= "none"
+      local is_root = box.id == 1
+      if is_root or has_border then
+        local backdrop = false ---@type boolean?
+        if is_root then
+          backdrop = nil
+        end
+        self.box_wins[box.id] = Snacks.win(Snacks.win.resolve(box, {
+          relative = is_root and "editor" or "win",
+          focusable = false,
+          enter = false,
+          show = false,
+          backdrop = backdrop,
+          zindex = (self.opts.layout.zindex or 50) + box.depth,
+          border = box.border,
+        }))
       end
     end
-    for _, win in pairs(self.box_wins) do
-      win:update()
+  end)
+  self.root = self.box_wins[1]
+  assert(self.root, "no root box found")
+
+  -- close layout when any win is closed
+  for w, win in pairs(self.wins) do
+    self.win_opts[w] = vim.deepcopy(win.opts)
+  end
+
+  self.root:on("WinClosed", function(_, ev)
+    if self.closed then
+      return true
     end
+    local wid = tonumber(ev.match)
+    for w, win in pairs(self.wins) do
+      if self:is_enabled(w) and win.win == wid then
+        self:close()
+        return true
+      end
+    end
+  end)
+
+  -- update layout on VimResized
+  self.root:on("VimResized", function()
+    self:update()
   end)
   return self
 end
 
----@param cb fun(widget: snacks.layout.Widget)
----@param opts? {wins?:boolean, boxes?:boolean}
+---@param cb fun(widget: snacks.layout.Widget, parent?: snacks.layout.Box)
+---@param opts? {wins?:boolean, boxes?:boolean, box?:snacks.layout.Box}
 function M:each(cb, opts)
   opts = opts or {}
-  local stack = { self.opts.layout }
-  while #stack > 0 do
-    local box = table.remove(stack)
-    box.depth = box.depth or 0
-    if box.box then
-      ---@cast box snacks.layout.Box
-      for _, child in ipairs(box) do
-        child.depth = box.depth + 1
-        table.insert(stack, child)
-      end
+  ---@param widget snacks.layout.Widget
+  ---@param parent? snacks.layout.Box
+  local function _each(widget, parent)
+    if widget.box then
       if opts.boxes ~= false then
-        cb(box)
+        cb(widget, parent)
+      end
+      ---@cast widget snacks.layout.Box
+      for _, child in ipairs(widget) do
+        _each(child, widget)
       end
     elseif opts.wins ~= false then
-      cb(box)
+      cb(widget, parent)
     end
   end
+  _each(opts.box or self.opts.layout)
+end
+
+---@param win string
+function M:is_hidden(win)
+  return self.opts.hidden and vim.tbl_contains(self.opts.hidden, win)
+end
+
+---@param win string
+function M:toggle(win)
+  self.opts.hidden = self.opts.hidden or {}
+  if self:is_hidden(win) then
+    self.opts.hidden = vim.tbl_filter(function(w)
+      return w ~= win
+    end, self.opts.hidden)
+  else
+    table.insert(self.opts.hidden, win)
+  end
+  self:update()
 end
 
 ---@private
 function M:update()
-  local parent = self.win:dim()
-  ---@cast parent snacks.layout.Dim
-  parent.col, parent.row = 0, 0
-  parent.depth = 0
-  return self:update_box(vim.deepcopy(self.opts.layout), parent)
+  if self.closed then
+    return
+  end
+  vim.o.lazyredraw = true
+  for _, win in pairs(self.wins) do
+    win.enabled = false
+  end
+  local layout = vim.deepcopy(self.opts.layout)
+  if self.opts.fullscreen then
+    layout.width = 0
+    layout.height = 0
+    layout.col = 0
+    layout.row = 0
+  end
+  self.root:show()
+  self:update_box(layout, {
+    col = 0,
+    row = 0,
+    width = vim.o.columns,
+    height = vim.o.lines,
+  })
+  for _, win in pairs(self:get_wins()) do
+    win:show()
+  end
+  for w, win in pairs(self.wins) do
+    if not self:is_enabled(w) and win:win_valid() then
+      win:close()
+    end
+  end
+  if self.opts.on_update then
+    self.opts.on_update(self)
+  end
+  vim.o.lazyredraw = false
 end
 
 ---@param box snacks.layout.Box
----@param parent snacks.layout.Dim
+---@param parent snacks.win.Dim
 ---@private
 function M:update_box(box, parent)
   local size_main = box.box == "horizontal" and "width" or "height"
   local pos_main = box.box == "horizontal" and "col" or "row"
-  box.col = box.col or 0
-  box.row = box.row or 0
+  local is_root = box.id == 1
+
+  if not is_root then
+    box.col = box.col or 0
+    box.row = box.row or 0
+  end
+
+  local children = {} ---@type snacks.layout.Widget[]
+  for c, child in ipairs(box) do
+    if not (child.win and self:is_hidden(child.win)) then
+      children[#children + 1] = child
+    end
+    box[c] = nil
+  end
+  for c, child in ipairs(children) do
+    box[c] = child
+  end
 
   local dim, border = self:dim_box(box, parent)
   local orig_dim = vim.deepcopy(dim)
-  dim.col = dim.col + border.left
-  dim.row = dim.row + border.top
+  if is_root then
+    dim.col = 0
+    dim.row = 0
+  else
+    dim.col = dim.col + border.left
+    dim.row = dim.row + border.top
+  end
   local free = vim.deepcopy(dim)
 
   local function size(child)
@@ -187,7 +249,9 @@ function M:update_box(box, parent)
 
   local box_win = self.box_wins[box.id]
   if box_win then
-    box_win.opts.win = self.win.win
+    if not is_root then
+      box_win.opts.win = self.root.win
+    end
     box_win.opts.col = orig_dim.col
     box_win.opts.row = orig_dim.row
     box_win.opts.width = orig_dim.width
@@ -197,26 +261,22 @@ function M:update_box(box, parent)
   return dim
 end
 
----@param widget snacks.layout.Widget
----@param ret? snacks.win[]
+---@param widget? snacks.layout.Widget
 ---@private
-function M:get_wins(widget, ret)
-  ret = ret or {}
-  if widget.box then
-    for _, child in ipairs(widget) do
-      self:get_wins(child, ret)
+function M:get_wins(widget)
+  local ret = {} ---@type snacks.win[]
+  self:each(function(w)
+    if w.box and self.box_wins[w.id] then
+      table.insert(ret, self.box_wins[w.id])
+    elseif w.win and self:is_enabled(w.win) then
+      table.insert(ret, self.wins[w.win])
     end
-    if self.box_wins[widget.id] then
-      table.insert(ret, self.box_wins[widget.id])
-    end
-  else
-    table.insert(ret, self.wins[widget.win])
-  end
+  end, { box = widget })
   return ret
 end
 
 ---@param widget snacks.layout.Widget
----@param parent snacks.layout.Dim
+---@param parent snacks.win.Dim
 ---@private
 function M:resolve(widget, parent)
   if widget.box then
@@ -230,7 +290,7 @@ function M:resolve(widget, parent)
 end
 
 ---@param widget snacks.layout.Box
----@param parent snacks.layout.Dim
+---@param parent snacks.win.Dim
 ---@private
 function M:dim_box(widget, parent)
   local opts = vim.deepcopy(widget) --[[@as snacks.win.Config]]
@@ -239,13 +299,11 @@ function M:dim_box(widget, parent)
   opts.max_height = math.min(parent.height, opts.max_height or parent.height)
   local fake_win = setmetatable({ opts = opts }, Snacks.win)
   local ret = fake_win:dim(parent)
-  ---@cast ret snacks.layout.Dim
-  ret.depth = parent.depth + 1
   return ret, fake_win:border_size()
 end
 
 ---@param win snacks.layout.Win
----@param parent snacks.layout.Dim
+---@param parent snacks.win.Dim
 ---@private
 function M:update_win(win, parent)
   local w = self.wins[win.win]
@@ -263,9 +321,9 @@ function M:update_win(win, parent)
     win,
     {
       relative = "win",
-      win = self.win.win,
+      win = self.root.win,
       backdrop = false,
-      zindex = self.win.opts.zindex + parent.depth,
+      zindex = self.root.opts.zindex + win.depth,
     }
   )
   -- adjust max width / height
@@ -283,36 +341,45 @@ function M:update_win(win, parent)
   return dim
 end
 
-function M:close()
-  for _, win in pairs(self.wins) do
-    win:close()
+--- Toggle fullscreen
+function M:maximize()
+  self.opts.fullscreen = not self.opts.fullscreen
+  self:update()
+end
+
+---@param opts? {wins?: boolean}
+function M:close(opts)
+  if self.closed then
+    return
+  end
+  opts = opts or {}
+  self.closed = true
+  for w, win in pairs(self.wins) do
+    if opts.wins == false then
+      win.opts = self.win_opts[w]
+    elseif win:valid() then
+      win:close()
+    end
   end
   for _, win in pairs(self.box_wins) do
     win:close()
   end
-  self.win:close()
 end
 
 function M:valid()
-  return self.win:valid()
+  return self.root:valid()
+end
+
+---@param w string
+function M:is_enabled(w)
+  return not self:is_hidden(w) and self.wins[w].enabled
 end
 
 function M:show()
   if self:valid() then
     return
   end
-  self.win:show()
   self:update()
-  for _, win in pairs(self.wins) do
-    if win.enabled then
-      win:show()
-      win:update()
-    end
-  end
-  for _, win in pairs(self.box_wins) do
-    win:show()
-    win:update()
-  end
 end
 
 return M

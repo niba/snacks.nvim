@@ -61,9 +61,8 @@ M.command_history = {
   finder = "vim_history",
   name = "cmd",
   format = "text",
-  preset = "nopreview",
   layout = {
-    win = { title = " Command History ", title_pos = "center" },
+    preset = "vscode",
   },
   actions = { confirm = "cmd" },
 }
@@ -394,7 +393,7 @@ M.marks = {
 
 -- List all available sources
 M.pickers = {
-  finder = "pickers",
+  finder = "meta_pickers",
   format = "text",
   actions = {
     confirm = function(picker, item)
@@ -404,6 +403,28 @@ M.pickers = {
       end
     end,
   },
+}
+
+M.picker_actions = {
+  finder = "meta_actions",
+  format = "text",
+}
+M.picker_format = {
+  finder = "meta_format",
+  format = "text",
+}
+M.picker_layouts = {
+  finder = "meta_layouts",
+  format = "text",
+  on_moved = function(picker, item)
+    vim.schedule(function()
+      picker:update_layout(item.text)
+    end)
+  end,
+}
+M.picker_preview = {
+  finder = "meta_preview",
+  format = "text",
 }
 
 -- Open recent projects
@@ -463,9 +484,8 @@ M.search_history = {
   finder = "vim_history",
   name = "search",
   format = "text",
-  preset = "nopreview",
   layout = {
-    win = { title = " Search History ", title_pos = "center" },
+    preset = "vscode",
   },
   actions = { confirm = "search" },
 }

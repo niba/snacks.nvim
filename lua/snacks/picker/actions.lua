@@ -49,6 +49,15 @@ M.cancel = function() end
 
 M.confirm = M.edit
 
+function M.toggle_maximize(picker)
+  picker.layout:maximize()
+end
+
+function M.toggle_preview(picker)
+  picker.layout:toggle("preview")
+  picker:show_preview()
+end
+
 ---@param items snacks.picker.Item[]
 ---@param opts? {win?:number}
 local function setqflist(items, opts)

@@ -31,6 +31,10 @@ function M.new(opts)
       wo = {
         winhighlight = Snacks.picker.highlight.winhl("SnacksPickerPreview"),
       },
+      on_win = function()
+        self.item = nil
+        self:reset()
+      end,
     }
   ))
   self.state = {}

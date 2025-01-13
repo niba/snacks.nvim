@@ -39,12 +39,16 @@ local M = {}
 ---@field max_line_length? number defaults to 500
 ---@field ft? string defaults to auto-detect
 
----@class snacks.picker.list.Config: snacks.win.Config
----@field reverse? boolean
+---@class snacks.picker.Layout
+---@field layout snacks.layout.Box
+---@field reverse? boolean when true, the list will be reversed (bottom-up)
+---@field fullscreen? boolean open in fullscreen
+---@field preview? boolean show preview window
+---@field preset? string|fun(source:string):string
 
 ---@class snacks.picker.win.Config
 ---@field input? snacks.win.Config|{}
----@field list? snacks.picker.list.Config|{}
+---@field list? snacks.win.Config|{}
 ---@field preview? snacks.win.Config|{}
 
 ---@class snacks.picker.Config
@@ -55,7 +59,6 @@ local M = {}
 ---@field live? boolean
 ---@field limit? number when set, the finder will stop after finding this number of items. useful for live searches
 ---@field ui_select? boolean
----@field preset? string|string[]
 ---@field auto_confirm? boolean Automatically confirm if there is only one item
 ---@field format? snacks.picker.Formatter|string
 ---@field items? snacks.picker.finder.Item[]
@@ -64,15 +67,21 @@ local M = {}
 ---@field sorter? snacks.matcher.sorter
 ---@field actions? table<string, snacks.picker.Action.spec>
 ---@field win? snacks.picker.win.Config
----@field layout? snacks.layout.Config|{}
+---@field layout? snacks.picker.Layout|{}|fun(source:string):snacks.picker.Layout
 ---@field preview? snacks.picker.preview.Config
 ---@field previewer? snacks.picker.Previewer|string
 ---@field sources? snacks.picker.sources.Config|{}
 ---@field icons? snacks.picker.icons
 ---@field source? string
+---@field on_moved? fun(picker:snacks.Picker, item:snacks.picker.Item)
 local defaults = {
   prompt = " ",
   sources = {},
+  layout = {
+    preset = function()
+      return vim.o.columns >= 120 and "default" or "vertical"
+    end,
+  },
   ui_select = true, -- replace `vim.ui.select` with the snacks picker
   preview = {
     file = {
@@ -122,6 +131,8 @@ local defaults = {
         ["/"] = "toggle_focus",
         ["q"] = "close",
         ["?"] = "toggle_help",
+        ["<a-m>"] = { "toggle_maximize", mode = { "i", "n" } },
+        ["<a-p>"] = { "toggle_preview", mode = { "i", "n" } },
         ["<C-w>"] = { "<c-s-w>", mode = { "i" }, expr = true, desc = "delete word" },
         ["<C-Up>"] = { "history_back", mode = { "i", "n" } },
         ["<C-Down>"] = { "history_forward", mode = { "i", "n" } },
@@ -161,27 +172,6 @@ local defaults = {
         ["<ScrollWheelDown>"] = "list_scroll_wheel_down",
         ["<ScrollWheelUp>"] = "list_scroll_wheel_up",
       },
-    },
-  },
-  layout = {
-    win = {
-      width = 0.8,
-      height = 0.8,
-      zindex = 50,
-      -- border = "rounded",
-    },
-    layout = {
-      box = "horizontal",
-      {
-        box = "vertical",
-        border = "rounded",
-        title = "{source} {live}",
-        title_pos = "center",
-        width = 0.5,
-        { win = "input", height = 1, border = "bottom" },
-        { win = "list", border = "none" },
-      },
-      { win = "preview", border = "rounded" },
     },
   },
   ---@class snacks.picker.icons

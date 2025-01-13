@@ -47,14 +47,15 @@ vim.schedule(M.config.setup)
 ---@param opts? snacks.picker.Config
 ---@overload fun(opts: snacks.picker.Config): snacks.Picker
 function M.pick(source, opts)
-  if not source and not opts then
-    return M.pick("pickers")
-  end
   if not opts and type(source) == "table" then
     opts, source = source, nil
   end
   opts = opts or {}
   opts.source = source or opts.source
+  if not opts.source then
+    opts.source = "pickers"
+    return M.pick(opts)
+  end
   return require("snacks.picker.core.picker").new(opts)
 end
 
