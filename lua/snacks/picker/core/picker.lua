@@ -181,7 +181,7 @@ function M:set_layout(layout)
   if self.list.reverse ~= layout.reverse then
     Snacks.notify.warn(
       "Heads up! This layout changed the list order,\nso `up` goes down and `down` goes up.",
-      { title = "Snacks Picker" }
+      { title = "Snacks Picker", id = "snacks_picker_layout_change" }
     )
   end
   self.layout:close({ wins = false })

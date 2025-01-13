@@ -77,7 +77,7 @@ function M:update(main)
   self.main = main
   self.win_opts.main.win = main
   self.win.opts = vim.tbl_deep_extend("force", self.win.opts, main and self.win_opts.main or self.win_opts.layout)
-  if self.win:valid() then
+  if main and self.win:valid() then
     self.win:update()
   end
 end
