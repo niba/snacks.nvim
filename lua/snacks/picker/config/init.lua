@@ -27,6 +27,9 @@ function M.layout(opts)
   opts = type(opts) == "string" and { layout = { preset = opts } } or opts
   local layouts = require("snacks.picker.config.layouts")
   local layout = M.resolve(opts.layout or {}, opts.source)
+  if layout.layout then
+    return layout
+  end
   local preset = M.resolve(layout.preset or "custom", opts.source)
   local ret = vim.deepcopy(layouts[preset] or {})
   ret = vim.tbl_deep_extend("force", ret, layout or {})
