@@ -199,6 +199,7 @@ Snacks.util.set_hl({
 }, { prefix = "Snacks", default = true })
 
 local id = 0
+local event_stack = {} ---@type string[]
 
 --@private
 ---@param ...? snacks.win.Config|string|{}
@@ -417,7 +418,10 @@ function M:_on(event, opts)
   end
   event_opts.group = event_opts.group or self.augroup
   event_opts.callback = function(ev)
-    return opts.callback(self, ev)
+    table.insert(event_stack, ev.event)
+    local ok, err = pcall(opts.callback, self, ev)
+    table.remove(event_stack)
+    return not ok and error(err) or err
   end
   if event_opts.pattern or event_opts.buffer then
     -- don't alter the pattern or buffer
@@ -485,7 +489,11 @@ function M:close(opts)
       Snacks.notify.error("Failed to close window: " .. err)
     end
   end
-  vim.schedule(try_close)
+  -- HACK: WinClosed is not recursive, so we need to schedule it
+  -- if we're in a WinClosed event
+  if vim.tbl_contains(event_stack, "WinClosed") or not pcall(close) then
+    vim.schedule(try_close)
+  end
 end
 
 function M:hide()
