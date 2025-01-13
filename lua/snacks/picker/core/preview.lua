@@ -31,6 +31,7 @@ function M.new(opts)
       wo = {
         winhighlight = Snacks.picker.highlight.winhl("SnacksPickerPreview"),
       },
+      bo = { filetype = "snacks_picker_preview" },
       on_win = function()
         self.item = nil
         self:reset()
@@ -104,7 +105,7 @@ function M:reset()
   vim.bo[self.win.buf].modifiable = true
   vim.api.nvim_buf_set_lines(self.win.buf, 0, -1, false, {})
   self:clear(self.win.buf)
-  vim.bo[self.win.buf].filetype = ""
+  vim.bo[self.win.buf].filetype = "snacks_picker_preview"
   vim.bo[self.win.buf].syntax = ""
   vim.wo[self.win.win].cursorline = false
 end
@@ -115,7 +116,7 @@ function M:scratch()
   vim.bo[buf].bufhidden = "wipe"
   local ei = vim.o.eventignore
   vim.o.eventignore = "all"
-  vim.bo[buf].filetype = "snacks_picker_preview_scratch"
+  vim.bo[buf].filetype = "snacks_picker_preview"
   vim.o.eventignore = ei
   vim.api.nvim_win_set_buf(self.win.win, buf)
   return buf

@@ -103,7 +103,9 @@ function M.new(opts)
   self.input.win:on("WinEnter", function()
     local current = vim.api.nvim_get_current_win()
     if not vim.tbl_contains({ self.input.win.win, self.list.win.win, self.preview.win.win }, current) then
-      self:close()
+      vim.schedule(function()
+        self:close()
+      end)
     end
   end)
 

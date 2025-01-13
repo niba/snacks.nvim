@@ -80,6 +80,7 @@ M.meta = {
 ---@field fixbuf? boolean don't allow other buffers to be opened in this window
 ---@field text? string|string[]|fun():(string[]|string) Initial lines to set in the buffer
 ---@field actions? table<string, snacks.win.Action.spec> Actions that can be used in key mappings
+---@field resize? boolean Automatically resize the window when the editor is resized
 local defaults = {
   show = true,
   fixbuf = true,
@@ -272,7 +273,7 @@ function M.new(opts)
   self:on("WinClosed", self.on_close, { win = true })
 
   -- update window size when resizing
-  self:on("VimResized", self.update)
+  self:on("VimResized", self.on_resize)
 
   ---@cast opts snacks.win.Config
   self.opts = opts
@@ -280,6 +281,12 @@ function M.new(opts)
     self:show()
   end
   return self
+end
+
+function M:on_resize()
+  if self.opts.resize ~= false then
+    self:update()
+  end
 end
 
 ---@param actions string|string[]

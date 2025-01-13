@@ -42,7 +42,7 @@ function M.new(picker)
       self:on_show()
     end,
     minimal = true,
-    bo = { modifiable = false },
+    bo = { modifiable = false, filetype = "snacks_picker_list" },
     wo = {
       conceallevel = 3,
       concealcursor = "nvc",

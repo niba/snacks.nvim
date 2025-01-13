@@ -64,8 +64,10 @@ function M.new(opts)
           focusable = false,
           enter = false,
           show = false,
+          resize = false,
           backdrop = backdrop,
           zindex = (self.opts.layout.zindex or 50) + box.depth,
+          bo = { filetype = "snacks_layout_box" },
           border = box.border,
         }))
       end
@@ -155,7 +157,9 @@ function M:update()
     layout.col = 0
     layout.row = 0
   end
-  self.root:show()
+  if not self.root:valid() then
+    self.root:show()
+  end
   self:update_box(layout, {
     col = 0,
     row = 0,
@@ -323,6 +327,7 @@ function M:update_win(win, parent)
       relative = "win",
       win = self.root.win,
       backdrop = false,
+      resize = false,
       zindex = self.root.opts.zindex + win.depth,
     }
   )
