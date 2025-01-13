@@ -76,18 +76,18 @@ function M.new(opts)
   self.root = self.box_wins[1]
   assert(self.root, "no root box found")
 
-  -- close layout when any win is closed
   for w, win in pairs(self.wins) do
     self.win_opts[w] = vim.deepcopy(win.opts)
   end
 
+  -- close layout when any win is closed
   self.root:on("WinClosed", function(_, ev)
     if self.closed then
       return true
     end
     local wid = tonumber(ev.match)
-    for w, win in pairs(self.wins) do
-      if self:is_enabled(w) and win.win == wid then
+    for _, win in pairs(self:get_wins()) do
+      if win.win == wid then
         self:close()
         return true
       end
@@ -266,7 +266,7 @@ function M:update_box(box, parent)
 end
 
 ---@param widget? snacks.layout.Widget
----@private
+---@package
 function M:get_wins(widget)
   local ret = {} ---@type snacks.win[]
   self:each(function(w)
