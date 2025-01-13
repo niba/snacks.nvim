@@ -221,6 +221,23 @@ function M.toggle_focus(picker)
   end
 end
 
+function M.cycle_win(picker)
+  local wins = { picker.input.win.win, picker.preview.win.win, picker.list.win.win }
+  local win = vim.api.nvim_get_current_win()
+  local idx = 1
+  for i, w in ipairs(wins) do
+    if w == win then
+      idx = i
+      break
+    end
+  end
+  win = wins[idx % #wins + 1] or 1 -- cycle
+  vim.api.nvim_set_current_win(win)
+  if win == picker.input.win.win then
+    vim.cmd("startinsert")
+  end
+end
+
 function M.focus_input(picker)
   picker.input.win:focus()
   vim.cmd("startinsert")

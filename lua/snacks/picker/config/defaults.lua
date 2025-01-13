@@ -121,6 +121,7 @@ local defaults = {
         ["<c-k>"] = "list_up",
         ["<c-n>"] = "list_down",
         ["<c-p>"] = "list_up",
+        ["<a-w>"] = "cycle_win",
       },
     },
     input = {
@@ -135,6 +136,7 @@ local defaults = {
         ["?"] = "toggle_help",
         ["<a-m>"] = { "toggle_maximize", mode = { "i", "n" } },
         ["<a-p>"] = { "toggle_preview", mode = { "i", "n" } },
+        ["<a-w>"] = { "cycle_win", mode = { "i", "n" } },
         ["<C-w>"] = { "<c-s-w>", mode = { "i" }, expr = true, desc = "delete word" },
         ["<C-Up>"] = { "history_back", mode = { "i", "n" } },
         ["<C-Down>"] = { "history_forward", mode = { "i", "n" } },
@@ -173,6 +175,7 @@ local defaults = {
         ["i"] = "focus_input",
         ["<ScrollWheelDown>"] = "list_scroll_wheel_down",
         ["<ScrollWheelUp>"] = "list_scroll_wheel_up",
+        ["<a-w>"] = "cycle_win",
       },
     },
   },
