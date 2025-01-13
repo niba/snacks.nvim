@@ -22,6 +22,12 @@ function M.select(items, opts, on_choice)
 
   local title = opts.prompt or "Select"
   title = title:gsub("^%s*", ""):gsub("[%s:]*$", "")
+  local layout = Snacks.picker.config.layout("select")
+  layout.preview = false
+  layout.layout.height = math.floor(math.min(vim.o.lines * 0.8 - 10, #items + 2) + 0.5) + 10
+  layout.layout.title = " " .. title .. " "
+  layout.layout.title_pos = "center"
+
   ---@type snacks.picker.finder.Item[]
   return Snacks.picker.pick({
     source = "select",
@@ -35,18 +41,7 @@ function M.select(items, opts, on_choice)
         end)
       end,
     },
-    preset = "nopreview",
-    layout = {
-      win = {
-        width = 0.5,
-        -- height is number of items minus 15 lines for the preview, with a max of 80% screen height
-        height = math.floor(math.min(vim.o.lines * 0.8 - 10, #items + 2) + 0.5) + 10,
-        zindex = 50,
-        border = "rounded",
-        title = " " .. title .. " ",
-        title_pos = "center",
-      },
-    },
+    layout = layout,
   })
 end
 

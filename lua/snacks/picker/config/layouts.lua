@@ -100,6 +100,24 @@ M.vertical = {
   },
 }
 
+M.select = {
+  preview = false,
+  layout = {
+    backdrop = false,
+    width = 0.5,
+    min_width = 80,
+    height = 0.4,
+    min_height = 10,
+    box = "vertical",
+    border = "rounded",
+    title = " Select ",
+    title_pos = "center",
+    { win = "input", height = 1, border = "bottom" },
+    { win = "list", border = "none" },
+    { win = "preview", height = 0.4, border = "top" },
+  },
+}
+
 M.vscode = {
   preview = false,
   layout = {

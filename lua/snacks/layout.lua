@@ -141,7 +141,7 @@ function M:toggle(win)
   self:update()
 end
 
----@private
+---@package
 function M:update()
   if self.closed then
     return
