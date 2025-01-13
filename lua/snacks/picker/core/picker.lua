@@ -113,7 +113,7 @@ function M.new(opts)
   self.input.win:on("VimResized", function()
     vim.schedule(function()
       local layout = Snacks.picker.config.layout(self.opts)
-      self:update_layout(layout)
+      self:set_layout(layout)
     end)
   end)
 
@@ -127,6 +127,7 @@ function M.new(opts)
 end
 
 ---@param layout? snacks.picker.Layout
+---@private
 function M:init_layout(layout)
   layout = layout or Snacks.picker.config.layout(self.opts)
   self.resolved_layout = vim.deepcopy(layout)
@@ -155,8 +156,10 @@ function M:init_layout(layout)
   return layout
 end
 
+--- Set the picker layout. Can be either the name of a preset layout
+--- or a custom layout configuration.
 ---@param layout? string|snacks.picker.Layout
-function M:update_layout(layout)
+function M:set_layout(layout)
   layout = layout or Snacks.picker.config.layout(self.opts)
   layout = type(layout) == "string" and Snacks.picker.config.layout(layout) or layout
   ---@cast layout snacks.picker.Layout

@@ -418,7 +418,7 @@ M.picker_layouts = {
   format = "text",
   on_moved = function(picker, item)
     vim.schedule(function()
-      picker:update_layout(item.text)
+      picker:set_layout(item.text)
     end)
   end,
 }
