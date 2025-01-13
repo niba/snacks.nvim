@@ -223,6 +223,9 @@ end
 
 function M.cycle_win(picker)
   local wins = { picker.input.win.win, picker.preview.win.win, picker.list.win.win }
+  wins = vim.tbl_filter(function(w)
+    return vim.api.nvim_win_is_valid(w)
+  end, wins)
   local win = vim.api.nvim_get_current_win()
   local idx = 1
   for i, w in ipairs(wins) do
