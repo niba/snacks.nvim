@@ -75,6 +75,7 @@ local M = {}
 ---@field icons? snacks.picker.icons
 ---@field source? string
 ---@field on_moved? fun(picker:snacks.Picker, item:snacks.picker.Item)
+---@field layouts? table<string, snacks.picker.Layout>
 local defaults = {
   prompt = " ",
   sources = {},

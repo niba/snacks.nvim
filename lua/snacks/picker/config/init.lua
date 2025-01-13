@@ -18,7 +18,13 @@ function M.get(opts)
     opts.source and global.sources[opts.source] or {},
     opts,
   }
-  return vim.tbl_deep_extend("force", unpack(todo))
+  local ret = vim.tbl_deep_extend("force", unpack(todo))
+  ret.layouts = ret.layouts or {}
+  local layouts = require("snacks.picker.config.layouts")
+  for k, v in pairs(layouts or {}) do
+    ret.layouts[k] = ret.layouts[k] or v
+  end
+  return ret
 end
 
 --- Resolve the layout configuration
@@ -31,7 +37,7 @@ function M.layout(opts)
     return layout
   end
   local preset = M.resolve(layout.preset or "custom", opts.source)
-  local ret = vim.deepcopy(layouts[preset] or {})
+  local ret = vim.deepcopy(opts.layouts and opts.layouts[preset] or layouts[preset] or {})
   ret = vim.tbl_deep_extend("force", ret, layout or {})
   ret.preset = nil
   return ret

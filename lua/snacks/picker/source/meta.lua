@@ -25,8 +25,10 @@ function M.pickers(opts)
   return M.table("picker/config/sources.lua", opts.sources or {})
 end
 
-function M.layouts()
-  return M.table("picker/config/layouts.lua", require("snacks.picker.config.layouts"))
+---@param opts snacks.picker.Config
+---@type snacks.picker.finder
+function M.layouts(opts)
+  return M.table("picker/config/layouts.lua", opts.layouts or {})
 end
 
 function M.actions()
