@@ -64,12 +64,18 @@ function M.get_highlights(opts)
       local row = extmark[2] + 1
       ret[row] = ret[row] or {}
       local e = extmark[4]
-      e.sign_name = nil
-      e.sign_text = nil
-      e.ns_id = nil
-      e.end_row = nil
-      e.col = extmark[3]
-      table.insert(ret[row], e)
+      if e then
+        e.sign_name = nil
+        e.sign_text = nil
+        e.ns_id = nil
+        e.end_row = nil
+        e.col = extmark[3]
+        if e.virt_text_pos and not vim.tbl_contains({ "eol", "overlay", "right_align", "inline" }, e.virt_text_pos) then
+          e.virt_text = nil
+          e.virt_text_pos = nil
+        end
+        table.insert(ret[row], e)
+      end
     end
   end
 
