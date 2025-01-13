@@ -3,6 +3,8 @@
 ---@field win snacks.win
 ---@field previewer snacks.picker.Previewer
 ---@field state table<string, any>
+---@field main? number
+---@field win_opts {main: snacks.win.Config, layout: snacks.win.Config, win: snacks.win.Config}
 local M = {}
 M.__index = M
 
@@ -18,26 +20,45 @@ local ns = vim.api.nvim_create_namespace("snacks.picker.preview")
 local ns_loc = vim.api.nvim_create_namespace("snacks.picker.preview.loc")
 
 ---@param opts snacks.picker.Config
-function M.new(opts)
+---@param main? number
+function M.new(opts, main)
   local self = setmetatable({}, M)
-  self.win = Snacks.win(Snacks.win.resolve(
+  local win_opts = Snacks.win.resolve(
     {
       title_pos = "center",
     },
     opts.win.preview,
     {
       show = false,
+      enter = false,
+      width = 0,
+      height = 0,
       fixbuf = false,
-      wo = {
-        winhighlight = Snacks.picker.highlight.winhl("SnacksPickerPreview"),
-      },
       bo = { filetype = "snacks_picker_preview" },
       on_win = function()
         self.item = nil
         self:reset()
       end,
     }
-  ))
+  )
+  self.win_opts = {
+    main = {
+      relative = "win",
+      backdrop = false,
+      wo = {
+        winhighlight = "NormalFloat:Normal",
+      },
+    },
+    layout = {
+      backdrop = win_opts.backdrop == true,
+      relative = "win",
+      wo = {
+        winhighlight = Snacks.picker.highlight.winhl("SnacksPickerPreview"),
+      },
+    },
+  }
+  self.win = Snacks.win(win_opts)
+  self:update(main)
   self.state = {}
 
   self.win:on("WinClosed", function()
@@ -49,6 +70,16 @@ function M.new(opts)
   ---@cast previewer snacks.picker.Previewer
   self.previewer = previewer
   return self
+end
+
+---@param main? number
+function M:update(main)
+  self.main = main
+  self.win_opts.main.win = main
+  self.win.opts = vim.tbl_deep_extend("force", self.win.opts, main and self.win_opts.main or self.win_opts.layout)
+  if self.win:valid() then
+    self.win:update()
+  end
 end
 
 ---@param picker snacks.Picker

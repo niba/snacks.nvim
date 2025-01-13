@@ -522,6 +522,9 @@ end
 ---@param title string
 ---@param pos? "center"|"left"|"right"
 function M:set_title(title, pos)
+  if not self:has_border() then
+    return
+  end
   title = vim.trim(title)
   if title ~= "" then
     -- HACK: add extra space when last char is non word

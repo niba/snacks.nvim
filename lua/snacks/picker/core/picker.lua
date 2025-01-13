@@ -82,9 +82,11 @@ function M.new(opts)
   M._pickers[self] = true
   M._active[self] = true
 
+  local layout = Snacks.picker.config.layout(self.opts)
   self.list = require("snacks.picker.core.list").new(self)
   self.input = require("snacks.picker.core.input").new(self)
-  self.preview = require("snacks.picker.core.preview").new(self.opts)
+  self.preview =
+    require("snacks.picker.core.preview").new(self.opts, layout.preview == "main" and self.parent_win or nil)
 
   M.last = {
     opts = self.opts,
@@ -109,11 +111,10 @@ function M.new(opts)
     end
   end)
 
-  self:init_layout()
+  self:init_layout(layout)
   self.input.win:on("VimResized", function()
     vim.schedule(function()
-      local layout = Snacks.picker.config.layout(self.opts)
-      self:set_layout(layout)
+      self:set_layout(Snacks.picker.config.layout(self.opts))
     end)
   end)
 
@@ -132,6 +133,12 @@ function M:init_layout(layout)
   layout = layout or Snacks.picker.config.layout(self.opts)
   self.resolved_layout = vim.deepcopy(layout)
   local opts = layout --[[@as snacks.layout.Config]]
+  local preview_main = layout.preview == "main"
+  local preview_hidden = layout.preview == false or preview_main
+  local backdrop = nil
+  if preview_main then
+    backdrop = false
+  end
   self.layout = Snacks.layout.new(vim.tbl_deep_extend("force", opts, {
     win = {
       wo = {
@@ -141,13 +148,17 @@ function M:init_layout(layout)
     wins = {
       input = self.input.win,
       list = self.list.win,
-      preview = self.preview.win,
+      preview = not preview_main and self.preview.win or nil,
     },
-    hidden = { layout.preview == false and "preview" or nil },
+    hidden = { preview_hidden and "preview" or nil },
     on_update = function()
       self:update_titles()
     end,
+    layout = {
+      backdrop = backdrop,
+    },
   }))
+  self.preview:update(preview_main and self.parent_win or nil)
   -- apply box highlight groups
   local boxwhl = Snacks.picker.highlight.winhl("SnacksPickerBox")
   for _, win in pairs(self.layout.box_wins) do
@@ -246,6 +257,9 @@ function M:show()
   end
   self.shown = true
   self.layout:show()
+  if self.preview.main then
+    self.preview.win:show()
+  end
   self.input.win:focus()
 end
 
@@ -290,6 +304,7 @@ function M:close()
   if (current == self.input.win.win or current == self.list.win.win) and vim.api.nvim_win_is_valid(self.parent_win) then
     vim.api.nvim_set_current_win(self.parent_win)
   end
+  self.preview.win:close()
   self.layout:close()
   self.updater:stop()
   M._active[self] = nil

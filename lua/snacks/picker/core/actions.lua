@@ -17,6 +17,9 @@ function M.get(picker)
     ---@param t table<string, snacks.win.Action>
     ---@param k string
     __index = function(t, k)
+      if type(k) ~= "string" then
+        return
+      end
       local p = ref()
       if not p then
         return
