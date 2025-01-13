@@ -5,6 +5,8 @@ local uv = vim.uv or vim.loop
 ---@class snacks.picker
 ---@field git_files fun(opts?: snacks.picker.git.files.Config): snacks.Picker
 ---@field git_log fun(opts?: snacks.picker.git.log.Config): snacks.Picker
+---@field git_log_file fun(opts?: snacks.picker.git.log.Config): snacks.Picker
+---@field git_log_line fun(opts?: snacks.picker.git.log.Config): snacks.Picker
 
 ---@param opts snacks.picker.git.files.Config
 ---@type snacks.picker.finder
