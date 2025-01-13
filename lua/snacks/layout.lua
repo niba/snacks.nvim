@@ -65,6 +65,7 @@ function M.new(opts)
           enter = false,
           show = false,
           resize = false,
+          noautocmd = true,
           backdrop = backdrop,
           zindex = (self.opts.layout.zindex or 50) + box.depth,
           bo = { filetype = "snacks_layout_box" },

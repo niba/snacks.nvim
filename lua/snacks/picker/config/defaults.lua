@@ -169,6 +169,7 @@ local defaults = {
       minimal = false,
       wo = {
         cursorline = false,
+        colorcolumn = "",
       },
       keys = {
         ["q"] = "close",
