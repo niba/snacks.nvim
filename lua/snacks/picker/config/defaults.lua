@@ -43,6 +43,7 @@ local M = {}
 ---@field layout snacks.layout.Box
 ---@field reverse? boolean when true, the list will be reversed (bottom-up)
 ---@field fullscreen? boolean open in fullscreen
+---@field cycle? boolean cycle through the list
 ---@field preview? boolean show preview window
 ---@field preset? string|fun(source:string):string
 
@@ -78,6 +79,7 @@ local defaults = {
   prompt = " ",
   sources = {},
   layout = {
+    cycle = true,
     preset = function()
       return vim.o.columns >= 120 and "default" or "vertical"
     end,

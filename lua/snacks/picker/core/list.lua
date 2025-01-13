@@ -165,6 +165,9 @@ function M:_move(to, absolute, render)
     self.cursor, self.top = 1, 1
   else
     self.cursor = absolute and to or self.cursor + to
+    if self.picker.opts.layout.cycle then
+      self.cursor = (self.cursor - 1) % self:count() + 1
+    end
     self.cursor = minmax(self.cursor, 1, self:count())
     local scrolloff = self:scrolloff()
     self.top = minmax(self.top, self.cursor - self:height() + scrolloff + 1, self.cursor - scrolloff)
