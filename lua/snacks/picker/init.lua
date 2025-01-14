@@ -63,7 +63,8 @@ function M.pick(source, opts)
   end
   opts = opts or {}
   opts.source = source or opts.source
-  if not opts.source then
+  -- Show pickers if no source, items or finder is provided
+  if not (opts.source or opts.items or opts.finder) then
     opts.source = "pickers"
     return M.pick(opts)
   end
