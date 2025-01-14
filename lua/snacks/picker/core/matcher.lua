@@ -78,9 +78,7 @@ end
 ---@param opts? {prios?: snacks.picker.Item[]}
 function M:run(picker, opts)
   opts = opts or {}
-  if self.task:running() then
-    return
-  end
+  self.task:abort()
 
   -- PERF: fast path for empty pattern
   if self:empty() and not picker.finder.task:running() then
@@ -120,7 +118,6 @@ function M:run(picker, opts)
         Async.suspend()
       end
     until idx >= #picker.finder.items and not picker.finder.task:running()
-    -- table.sort(picker.list.items, picker.sorter)
 
     picker:update()
   end)
