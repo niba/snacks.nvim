@@ -199,6 +199,8 @@ function M:word()
   return self.visual and self.visual.text or vim.fn.expand("<cword>")
 end
 
+--- Update title templates
+---@private
 function M:update_titles()
   local data = {
     source = self.source_name,
@@ -216,6 +218,7 @@ function M:update_titles()
   end
 end
 
+--- Resume the last picker
 ---@private
 function M.resume()
   local last = M.last
@@ -267,8 +270,10 @@ function M:show()
   end
 end
 
+--- Returns an iterator over the items in the picker.
+--- Items will be in sorted order.
 ---@return fun():snacks.picker.Item?
-function M:items()
+function M:iter()
   local i = 0
   local n = self.finder:count()
   return function()
@@ -279,11 +284,19 @@ function M:items()
   end
 end
 
+--- Get all finder items
+function M:items()
+  return self.finder.items
+end
+
+--- Get the current item at the cursor
 function M:current()
   return self.list:current()
 end
 
----@param opts? {fallback?: boolean} If fallback is true (default), then return current item if no selected items
+--- Get the selected items.
+--- If `fallback=true` and there is no selection, return the current item.
+---@param opts? {fallback?: boolean} default is `false`
 function M:selected(opts)
   opts = opts or {}
   local ret = vim.deepcopy(self.list.selected)
@@ -293,10 +306,12 @@ function M:selected(opts)
   return ret
 end
 
+-- Total number of items in the picker
 function M:count()
   return self.finder:count()
 end
 
+--- Close the picker
 function M:close()
   if self.closed then
     return
@@ -321,10 +336,12 @@ function M:close()
   end)
 end
 
+--- Check if the finder or matcher is running
 function M:is_active()
   return self.finder:running() or self.matcher:running()
 end
 
+---@private
 function M:progress(ms)
   if self.updater:is_active() then
     return
@@ -339,6 +356,7 @@ function M:progress(ms)
   end, ms or 10)
 end
 
+---@hide
 function M:update()
   if self.closed then
     return
@@ -369,7 +387,6 @@ function M:update()
         self:close()
         return
       elseif count == 1 and self.opts.auto_confirm then
-        self:debug("auto_confirm")
         -- auto confirm if only one result
         self:action("confirm")
         self:close()
@@ -378,11 +395,9 @@ function M:update()
         -- show the picker if we have results
         self.list:unpause()
         self:show()
-        self:debug("show")
       end
     elseif list_count > 1 or (list_count == 1 and not self.opts.auto_confirm) then -- show the picker if we have results
       self:show()
-      self:debug("show")
     end
   end
 
@@ -398,6 +413,7 @@ function M:update()
   end
 end
 
+--- Execute the given action(s)
 ---@param actions string|string[]
 function M:action(actions)
   return self.input.win:execute(actions)
@@ -415,6 +431,8 @@ function M:find(opts)
   self:progress()
 end
 
+--- Add current filter to history
+---@private
 function M:hist_record()
   M.history[self.hist_idx] = {
     pattern = self.input.filter.pattern,
@@ -423,6 +441,7 @@ function M:hist_record()
   }
 end
 
+--- Move the history cursor
 ---@param forward? boolean
 function M:hist(forward)
   self:hist_record()
@@ -469,7 +488,7 @@ function M:match()
   self:progress()
 end
 
---- Get the current filter
+--- Get the active filter
 function M:filter()
   return self.input.filter:clone()
 end

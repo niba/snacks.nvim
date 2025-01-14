@@ -29,6 +29,12 @@ Meta functions for Snacks
 
 ## 📦 Module
 
+### `Snacks.meta.file()`
+
+```lua
+Snacks.meta.file(name)
+```
+
 ### `Snacks.meta.get()`
 
 Get the metadata for all snacks plugins

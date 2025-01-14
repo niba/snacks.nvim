@@ -23,11 +23,13 @@
 
 ```lua
 ---@class snacks.layout.Config
----@field win? snacks.words.Config|{}
 ---@field wins table<string, snacks.win>
 ---@field layout snacks.layout.Box
+---@field fullscreen? boolean open in fullscreen
+---@field hidden? string[] list of windows that will be excluded from the layout
+---@field on_update? fun(layout: snacks.layout)
 {
-  win = {
+  layout = {
     width = 0.6,
     height = 0.6,
     zindex = 50,
@@ -38,31 +40,13 @@
 ## 📚 Types
 
 ```lua
----@class snacks.layout.Dim: snacks.win.Dim
----@field depth number
-```
-
-```lua
----@class snacks.layout.Base
----@field width? number
----@field min_width? number
----@field max_width? number
----@field height? number
----@field min_height? number
----@field max_height? number
----@field col? number
----@field row? number
----@field border? string
+---@class snacks.layout.Win: snacks.win.Config,{}
 ---@field depth? number
-```
-
-```lua
----@class snacks.layout.Win: snacks.layout.Base, snacks.win.Config,{}
 ---@field win string
 ```
 
 ```lua
----@class snacks.layout.Box: snacks.layout.Base
+---@class snacks.layout.Box: snacks.layout.Win,{}
 ---@field box "horizontal" | "vertical"
 ---@field id? number
 ---@field [number] snacks.layout.Win | snacks.layout.Box
@@ -77,10 +61,11 @@
 ```lua
 ---@class snacks.layout
 ---@field opts snacks.layout.Config
----@field win snacks.win
+---@field root snacks.win
 ---@field wins table<string, snacks.win|{enabled?:boolean}>
 ---@field box_wins snacks.win[]
 ---@field win_opts table<string, snacks.win.Config>
+---@field closed? boolean
 Snacks.layout = {}
 ```
 
@@ -94,21 +79,51 @@ Snacks.layout.new(opts)
 ### `layout:close()`
 
 ```lua
-layout:close()
+---@param opts? {wins?: boolean}
+layout:close(opts)
 ```
 
 ### `layout:each()`
 
 ```lua
----@param cb fun(widget: snacks.layout.Widget)
----@param opts? {wins?:boolean, boxes?:boolean}
+---@param cb fun(widget: snacks.layout.Widget, parent?: snacks.layout.Box)
+---@param opts? {wins?:boolean, boxes?:boolean, box?:snacks.layout.Box}
 layout:each(cb, opts)
+```
+
+### `layout:is_enabled()`
+
+```lua
+---@param w string
+layout:is_enabled(w)
+```
+
+### `layout:is_hidden()`
+
+```lua
+---@param win string
+layout:is_hidden(win)
+```
+
+### `layout:maximize()`
+
+Toggle fullscreen
+
+```lua
+layout:maximize()
 ```
 
 ### `layout:show()`
 
 ```lua
 layout:show()
+```
+
+### `layout:toggle()`
+
+```lua
+---@param win string
+layout:toggle(win)
 ```
 
 ### `layout:valid()`

@@ -72,6 +72,7 @@ Snacks.win({
 ---@field fixbuf? boolean don't allow other buffers to be opened in this window
 ---@field text? string|string[]|fun():(string[]|string) Initial lines to set in the buffer
 ---@field actions? table<string, snacks.win.Action.spec> Actions that can be used in key mappings
+---@field resize? boolean Automatically resize the window when the editor is resized
 {
   show = true,
   fixbuf = true,
@@ -105,6 +106,19 @@ docs for more information on how to customize these styles
 }
 ```
 
+### `help`
+
+```lua
+{
+  position = "float",
+  backdrop = false,
+  border = "top",
+  row = -1,
+  width = 0,
+  height = 0.3,
+}
+```
+
 ### `minimal`
 
 ```lua
@@ -113,6 +127,7 @@ docs for more information on how to customize these styles
     cursorcolumn = false,
     cursorline = false,
     cursorlineopt = "both",
+    colorcolumn = "",
     fillchars = "eob: ,lastline:…",
     list = false,
     listchars = "extends:…,tab:  ",
@@ -141,17 +156,6 @@ docs for more information on how to customize these styles
 ## 📚 Types
 
 ```lua
----@class snacks.win.Event.callback.args
----@field id number
----@field event string
----@field group number?
----@field match string
----@field buf number
----@field file string
----@field data any
-```
-
-```lua
 ---@class snacks.win.Keys: vim.api.keyset.keymap
 ---@field [1]? string
 ---@field [2]? string|string[]|fun(self: snacks.win): string?
@@ -162,7 +166,7 @@ docs for more information on how to customize these styles
 ---@class snacks.win.Event: vim.api.keyset.create_autocmd
 ---@field buf? true
 ---@field win? true
----@field callback? fun(self: snacks.win, ev: snacks.win.Event.callback.args)
+---@field callback? fun(self: snacks.win, ev:vim.api.keyset.create_autocmd.callback_args):boolean?
 ```
 
 ```lua
@@ -204,6 +208,7 @@ docs for more information on how to customize these styles
 ---@field keys snacks.win.Keys[]
 ---@field events (snacks.win.Event|{event:string|string[]})[]
 ---@field meta table<string, string>
+---@field closed? boolean
 Snacks.win = {}
 ```
 
@@ -319,9 +324,15 @@ win:lines(from, to)
 
 ```lua
 ---@param event string|string[]
----@param cb fun(self: snacks.win)
+---@param cb fun(self: snacks.win, ev:vim.api.keyset.create_autocmd.callback_args):boolean?
 ---@param opts? snacks.win.Event
 win:on(event, cb, opts)
+```
+
+### `win:on_resize()`
+
+```lua
+win:on_resize()
 ```
 
 ### `win:parent_size()`
@@ -383,6 +394,13 @@ win:text(from, to)
 
 ```lua
 win:toggle()
+```
+
+### `win:toggle_help()`
+
+```lua
+---@param opts? {col_width?: number, key_width?: number, win?: snacks.win.Config}
+win:toggle_help(opts)
 ```
 
 ### `win:update()`

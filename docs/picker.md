@@ -24,12 +24,12 @@
 ```lua
 ---@class snacks.picker.Config
 ---@field prompt? string
----@field pattern? string|fun():string Pattern used to filter items by the matcher
----@field search? string|fun():string Initial search string used by finders
+---@field pattern? string|fun(picker:snacks.Picker):string Pattern used to filter items by the matcher
+---@field search? string|fun(picker:snacks.Picker):string Initial search string used by finders
 ---@field cwd? string
 ---@field live? boolean
+---@field limit? number when set, the finder will stop after finding this number of items. useful for live searches
 ---@field ui_select? boolean
----@field preset? string|string[]
 ---@field auto_confirm? boolean Automatically confirm if there is only one item
 ---@field format? snacks.picker.Formatter|string
 ---@field items? snacks.picker.finder.Item[]
@@ -38,15 +38,25 @@
 ---@field sorter? snacks.matcher.sorter
 ---@field actions? table<string, snacks.picker.Action.spec>
 ---@field win? snacks.picker.win.Config
----@field layout? snacks.layout.Config|{}
+---@field layout? snacks.picker.Layout|{}|fun(source:string):snacks.picker.Layout
 ---@field preview? snacks.picker.preview.Config
 ---@field previewer? snacks.picker.Previewer|string
 ---@field sources? snacks.picker.sources.Config|{}
 ---@field icons? snacks.picker.icons
 ---@field source? string
+---@field on_change? fun(picker:snacks.Picker, item:snacks.picker.Item) called when the cursor changes
+---@field on_show? fun(picker:snacks.Picker) called when the picker is shown
+---@field layouts? table<string, snacks.picker.Layout>
+---@field main? snacks.picker.main.Config
 {
   prompt = " ",
   sources = {},
+  layout = {
+    cycle = true,
+    preset = function()
+      return vim.o.columns >= 120 and "default" or "vertical"
+    end,
+  },
   ui_select = true, -- replace `vim.ui.select` with the snacks picker
   preview = {
     file = {
@@ -84,18 +94,24 @@
         ["<c-k>"] = "list_up",
         ["<c-n>"] = "list_down",
         ["<c-p>"] = "list_up",
+        ["<a-w>"] = "cycle_win",
+        ["<Esc>"] = "close",
       },
     },
     input = {
       keys = {
-        ["<esc>"] = "close",
+        ["<Esc>"] = "close",
         ["G"] = "list_bottom",
         ["gg"] = "list_top",
         ["j"] = "list_down",
         ["k"] = "list_up",
         ["/"] = "toggle_focus",
         ["q"] = "close",
-        ["<C-w>"] = { "<c-s-w>", mode = { "i" }, expr = true },
+        ["?"] = "toggle_help",
+        ["<a-m>"] = { "toggle_maximize", mode = { "i", "n" } },
+        ["<a-p>"] = { "toggle_preview", mode = { "i", "n" } },
+        ["<a-w>"] = { "cycle_win", mode = { "i", "n" } },
+        ["<C-w>"] = { "<c-s-w>", mode = { "i" }, expr = true, desc = "delete word" },
         ["<C-Up>"] = { "history_back", mode = { "i", "n" } },
         ["<C-Down>"] = { "history_forward", mode = { "i", "n" } },
         ["<Tab>"] = { "select_and_next", mode = { "i", "n" } },
@@ -115,58 +131,50 @@
         ["<ScrollWheelUp>"] = { "list_scroll_wheel_up", mode = { "i", "n" } },
         ["<c-v>"] = { "edit_vsplit", mode = { "i", "n" } },
         ["<c-s>"] = { "edit_split", mode = { "i", "n" } },
-        ["<c-q>"] = { "qf", mode = { "i", "n" } },
-        ["<a-q>"] = { "qf_all", mode = { "i", "n" } },
+        ["<c-q>"] = { "qflist", mode = { "i", "n" } },
         ["<a-i>"] = { "toggle_ignored", mode = { "i", "n" } },
         ["<a-h>"] = { "toggle_hidden", mode = { "i", "n" } },
+      },
+      b = {
+        minipairs_disable = true,
       },
     },
     preview = {
       minimal = false,
       wo = {
         cursorline = false,
+        colorcolumn = "",
       },
       keys = {
+        ["<Esc>"] = "close",
         ["q"] = "close",
         ["i"] = "focus_input",
         ["<ScrollWheelDown>"] = "list_scroll_wheel_down",
         ["<ScrollWheelUp>"] = "list_scroll_wheel_up",
+        ["<a-w>"] = "cycle_win",
       },
-    },
-  },
-  layout = {
-    win = {
-      width = 0.8,
-      height = 0.8,
-      zindex = 50,
-      -- border = "rounded",
-    },
-    layout = {
-      box = "horizontal",
-      {
-        box = "vertical",
-        border = "rounded",
-        title = "{source} {live}",
-        title_pos = "center",
-        width = 0.5,
-        { win = "input", height = 1, border = "bottom" },
-        { win = "list", border = "none" },
-      },
-      { win = "preview", border = "rounded" },
     },
   },
   ---@class snacks.picker.icons
   icons = {
+    indent = {
+      top    = "│ ",
+      middle = "├╴",
+      last   = "└╴",
+    },
     ui = {
-      live = "󰐰 ",
-      selected = "● ",
+      live        = "󰐰 ",
+      selected    = "● ",
       -- selected = " ",
+    },
+    git = {
+      commit = "󰜘 ",
     },
     diagnostics = {
       Error = " ",
-      Warn = " ",
-      Hint = " ",
-      Info = " ",
+      Warn  = " ",
+      Hint  = " ",
+      Info  = " ",
     },
     kinds = {
       Array         = " ",
@@ -213,13 +221,6 @@
 ```
 
 ## 📚 Types
-
-```lua
----@class snacks.picker.Last
----@field opts snacks.picker.Config
----@field selected snacks.picker.Item[]
----@field filter snacks.picker.Filter
-```
 
 ```lua
 ---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number}
@@ -276,15 +277,27 @@ Generic filter used by finders to pre-filter items
 ```
 
 ```lua
----@class snacks.picker.list.Config: snacks.win.Config
----@field reverse? boolean
+---@class snacks.picker.Layout
+---@field layout snacks.layout.Box
+---@field reverse? boolean when true, the list will be reversed (bottom-up)
+---@field fullscreen? boolean open in fullscreen
+---@field cycle? boolean cycle through the list
+---@field preview? boolean|"main" show preview window in the picker or the main window
+---@field preset? string|fun(source:string):string
 ```
 
 ```lua
 ---@class snacks.picker.win.Config
 ---@field input? snacks.win.Config|{}
----@field list? snacks.picker.list.Config|{}
+---@field list? snacks.win.Config|{}
 ---@field preview? snacks.win.Config|{}
+```
+
+```lua
+---@class snacks.picker.Last
+---@field opts snacks.picker.Config
+---@field selected snacks.picker.Item[]
+---@field filter snacks.picker.Filter
 ```
 
 ## 📦 Module
@@ -341,6 +354,8 @@ Snacks.picker.pick(source, opts)
 Snacks.picker.select(...)
 ```
 
+
+
 ## 📦 `snacks.picker.core.picker`
 
 ```lua
@@ -350,9 +365,10 @@ Snacks.picker.select(...)
 ---@field format snacks.picker.Formatter
 ---@field input snacks.picker.input
 ---@field layout snacks.layout
+---@field resolved_layout snacks.picker.Layout
 ---@field list snacks.picker.list
 ---@field matcher snacks.picker.Matcher
----@field parent_win number
+---@field main number
 ---@field preview snacks.picker.Preview
 ---@field shown? boolean
 ---@field sorter snacks.matcher.sorter
@@ -362,10 +378,13 @@ Snacks.picker.select(...)
 ---@field closed? boolean
 ---@field hist_idx number
 ---@field hist_cursor number
+---@field visual? snacks.picker.Visual
 local M = {}
 ```
 
 ### `picker:action()`
+
+Execute the given action(s)
 
 ```lua
 ---@param actions string|string[]
@@ -374,11 +393,23 @@ picker:action(actions)
 
 ### `picker:close()`
 
+Close the picker
+
 ```lua
 picker:close()
 ```
 
+### `picker:count()`
+
+Total number of items in the picker
+
+```lua
+picker:count()
+```
+
 ### `picker:current()`
+
+Get the current item at the cursor
 
 ```lua
 picker:current()
@@ -394,30 +425,33 @@ picker:debug(name, start)
 
 ### `picker:filter()`
 
+Get the active filter
+
 ```lua
 picker:filter()
 ```
 
 ### `picker:find()`
 
+Clear the list and run the finder and matcher
+
 ```lua
-picker:find()
+---@param opts? {on_done?: fun()}
+picker:find(opts)
 ```
 
 ### `picker:hist()`
+
+Move the history cursor
 
 ```lua
 ---@param forward? boolean
 picker:hist(forward)
 ```
 
-### `picker:hist_record()`
-
-```lua
-picker:hist_record()
-```
-
 ### `picker:is_active()`
+
+Check if the finder or matcher is running
 
 ```lua
 picker:is_active()
@@ -425,22 +459,50 @@ picker:is_active()
 
 ### `picker:items()`
 
+Get all finder items
+
 ```lua
----@return fun():snacks.picker.Item?
 picker:items()
 ```
 
-### `picker:progress()`
+### `picker:iter()`
+
+Returns an iterator over the items in the picker.
+Items will be in sorted order.
 
 ```lua
-picker:progress(ms)
+---@return fun():snacks.picker.Item?
+picker:iter()
+```
+
+### `picker:match()`
+
+Run the matcher with the current pattern.
+May also trigger a new find if the search string has changed,
+like during live searches.
+
+```lua
+picker:match()
 ```
 
 ### `picker:selected()`
 
+Get the selected items.
+If `fallback=true` and there is no selection, return the current item.
+
 ```lua
----@param opts? {fallback?: boolean} If fallback is true (default), then return current item if no selected items
+---@param opts? {fallback?: boolean} default is `false`
 picker:selected(opts)
+```
+
+### `picker:set_layout()`
+
+Set the picker layout. Can be either the name of a preset layout
+or a custom layout configuration.
+
+```lua
+---@param layout? string|snacks.picker.Layout
+picker:set_layout(layout)
 ```
 
 ### `picker:show()`
@@ -455,16 +517,10 @@ picker:show()
 picker:show_preview()
 ```
 
-### `picker:update()`
+### `picker:word()`
+
+Get the word under the cursor or the current visual selection
 
 ```lua
-picker:update()
+picker:word()
 ```
-
-### `picker:update_titles()`
-
-```lua
-picker:update_titles()
-```
-
-
