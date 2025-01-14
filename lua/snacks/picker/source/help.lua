@@ -49,7 +49,7 @@ function M.help(opts)
               text = fields[1],
               tag = fields[1],
               file = help_files[fields[2]],
-              search = fields[3],
+              search = "/\\V" .. fields[3]:sub(2),
             }
             if item.file then
               cb(item)
