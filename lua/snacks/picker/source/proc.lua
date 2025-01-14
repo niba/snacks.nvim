@@ -1,5 +1,4 @@
 local Async = require("snacks.picker.util.async")
-local Buffer = require("string.buffer")
 
 local M = {}
 
@@ -51,8 +50,7 @@ function M.proc(opts)
       return Snacks.notify.error("Failed to spawn " .. opts.cmd)
     end
 
-    -- PERF: use jit string buffers to avoid string concatenation
-    local prev = Buffer.new()
+    local prev ---@type string?
 
     self:on("abort", function()
       aborted = true
@@ -72,7 +70,7 @@ function M.proc(opts)
         return
       end
       if not data then
-        return #prev > 0 and cb({ text = prev:get() })
+        return prev and cb({ text = prev })
       end
       local from = 1
       while from <= #data do
@@ -80,11 +78,16 @@ function M.proc(opts)
         if nl then
           local cr = data:byte(nl - 2, nl - 2) == 13 -- \r
           local line = data:sub(from, nl - (cr and 2 or 1))
-          prev:put(line)
-          cb({ text = prev:get() })
+          if prev then
+            line, prev = prev .. line, nil
+          end
+          cb({ text = line })
           from = nl + 1
+        elseif prev then
+          prev = prev .. data:sub(from)
+          break
         else
-          prev:put(data:sub(from))
+          prev = data:sub(from)
           break
         end
       end
