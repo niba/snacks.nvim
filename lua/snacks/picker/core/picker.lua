@@ -45,7 +45,7 @@ M.last = nil
 ---@type {pattern: string, search: string, live?: boolean}[]
 M.history = {}
 
----@private
+---@hide
 ---@param opts? snacks.picker.Config
 function M.new(opts)
   local self = setmetatable({}, M)

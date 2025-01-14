@@ -76,10 +76,33 @@ function M.setup()
   did_setup = true
   require("snacks.picker.config.highlights")
   for source in pairs(Snacks.picker.config.get().sources) do
-    Snacks.picker[source] = function(opts)
-      return Snacks.picker.pick(source, opts)
+    M.wrap(source)
+  end
+  --- Automatically wrap new sources added after setup
+  setmetatable(require("snacks.picker.config.sources"), {
+    __newindex = function(t, k, v)
+      rawset(t, k, v)
+      M.wrap(k)
+    end,
+  })
+end
+
+---@param source string
+---@param opts? {check?: boolean}
+function M.wrap(source, opts)
+  if opts and opts.check then
+    local config = M.get()
+    if not config.sources[source] then
+      return
     end
   end
+  ---@type fun(opts: snacks.picker.Config): snacks.Picker
+  local ret = function(_opts)
+    return Snacks.picker.pick(source, _opts)
+  end
+  ---@diagnostic disable-next-line: no-unknown
+  Snacks.picker[source] = ret
+  return ret
 end
 
 return M

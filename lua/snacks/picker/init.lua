@@ -7,17 +7,29 @@
 ---@field preview snacks.picker.preview
 ---@field current? snacks.Picker
 ---@field highlight snacks.picker.highlight
+---@field resume fun(opts?: snacks.picker.Config):snacks.Picker
+---@field sources snacks.picker.sources.Config
 ---@overload fun(opts: snacks.picker.Config): snacks.Picker
 ---@overload fun(source: string, opts: snacks.picker.Config): snacks.Picker
 local M = setmetatable({}, {
   __call = function(M, ...)
     return M.pick(...)
   end,
+  ---@param M snacks.picker
   __index = function(M, k)
-    if k == "setup" then
+    if k == "setup" or type(k) ~= "string" then
       return
     end
-    local mods = { "actions", "config", "format", "preview", "util", "sorter", highlight = "util.highlight" }
+    local mods = {
+      "actions",
+      "config",
+      "format",
+      "preview",
+      "util",
+      "sorter",
+      highlight = "util.highlight",
+      sources = "config.sources",
+    }
     for m, mod in pairs(mods) do
       mod = mod == k and k or m == k and mod or nil
       if mod then
@@ -26,8 +38,7 @@ local M = setmetatable({}, {
         return rawget(M, k)
       end
     end
-    M.config.setup()
-    return rawget(M, k)
+    return M.config.wrap(k, { check = true })
   end,
 })
 
