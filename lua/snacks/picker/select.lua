@@ -1,5 +1,7 @@
 local M = {}
 
+---@alias snacks.picker.ui_select fun(items: any[], opts?: {prompt?: string, format_item?: (fun(item: any): string), kind?: string}, on_choice: fun(item?: any, idx?: number))
+
 ---@generic T
 ---@param items T[] Arbitrary items
 ---@param opts? {prompt?: string, format_item?: (fun(item: T): string), kind?: string}

@@ -23,10 +23,11 @@
 
 ```lua
 ---@class snacks.layout.Config
----@field wins table<string, snacks.win>
----@field layout snacks.layout.Box
+---@field show? boolean show the layout on creation (default: true)
+---@field wins table<string, snacks.win> windows to include in the layout
+---@field layout snacks.layout.Box layout definition
 ---@field fullscreen? boolean open in fullscreen
----@field hidden? string[] list of windows that will be excluded from the layout
+---@field hidden? string[] list of windows that will be excluded from the layout (but can be toggled)
 ---@field on_update? fun(layout: snacks.layout)
 {
   layout = {
@@ -42,14 +43,14 @@
 ```lua
 ---@class snacks.layout.Win: snacks.win.Config,{}
 ---@field depth? number
----@field win string
+---@field win string layout window name
 ```
 
 ```lua
 ---@class snacks.layout.Box: snacks.layout.Win,{}
 ---@field box "horizontal" | "vertical"
 ---@field id? number
----@field [number] snacks.layout.Win | snacks.layout.Box
+---@field [number] snacks.layout.Win | snacks.layout.Box children
 ```
 
 ```lua
@@ -78,6 +79,8 @@ Snacks.layout.new(opts)
 
 ### `layout:close()`
 
+Close the layout
+
 ```lua
 ---@param opts? {wins?: boolean}
 layout:close(opts)
@@ -93,12 +96,16 @@ layout:each(cb, opts)
 
 ### `layout:is_enabled()`
 
+Check if the window has been used in the layout
+
 ```lua
 ---@param w string
 layout:is_enabled(w)
 ```
 
 ### `layout:is_hidden()`
+
+Check if a window is hidden
 
 ```lua
 ---@param win string
@@ -115,11 +122,15 @@ layout:maximize()
 
 ### `layout:show()`
 
+Show the layout
+
 ```lua
 layout:show()
 ```
 
 ### `layout:toggle()`
+
+Toggle a window
 
 ```lua
 ---@param win string
@@ -127,6 +138,8 @@ layout:toggle(win)
 ```
 
 ### `layout:valid()`
+
+Check if layout is valid (visible)
 
 ```lua
 layout:valid()

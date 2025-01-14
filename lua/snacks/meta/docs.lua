@@ -293,7 +293,7 @@ end
 
 ---@param name string
 ---@param info snacks.docs.Info
----@param opts? {setup?:boolean, config?:boolean, styles?:boolean, types?:boolean, prefix?:string}
+---@param opts? {setup?:boolean, config?:boolean, styles?:boolean, types?:boolean, prefix?:string, examples?:boolean}
 function M.render(name, info, opts)
   opts = opts or {}
   local lines = {} ---@type string[]
@@ -334,15 +334,17 @@ function M.render(name, info, opts)
     add(M.md(info.config))
   end
 
-  local examples = M.examples(name)
-  local names = vim.tbl_keys(examples)
-  table.sort(names)
-  if not vim.tbl_isempty(examples) then
-    add("## 🚀 Examples\n")
-    for _, n in ipairs(names) do
-      local example = examples[n]
-      add(("### `%s`\n"):format(n))
-      add(M.md(example))
+  if opts.examples ~= false then
+    local examples = M.examples(name)
+    local names = vim.tbl_keys(examples)
+    table.sort(names)
+    if not vim.tbl_isempty(examples) then
+      add("## 🚀 Examples\n")
+      for _, n in ipairs(names) do
+        local example = examples[n]
+        add(("### `%s`\n"):format(n))
+        add(M.md(example))
+      end
     end
   end
 
@@ -529,7 +531,13 @@ function M._build()
         table.insert(rendered, "")
         vim.list_extend(
           rendered,
-          M.render(name, child, { setup = false, config = false, styles = false, types = false })
+          M.render(name, child, {
+            setup = false,
+            config = false,
+            styles = false,
+            types = false,
+            examples = false,
+          })
         )
       end
 

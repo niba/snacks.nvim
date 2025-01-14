@@ -14,20 +14,21 @@ M.meta = {
 
 ---@class snacks.layout.Win: snacks.win.Config,{}
 ---@field depth? number
----@field win string
+---@field win string layout window name
 
 ---@class snacks.layout.Box: snacks.layout.Win,{}
 ---@field box "horizontal" | "vertical"
 ---@field id? number
----@field [number] snacks.layout.Win | snacks.layout.Box
+---@field [number] snacks.layout.Win | snacks.layout.Box children
 
 ---@alias snacks.layout.Widget snacks.layout.Win | snacks.layout.Box
 
 ---@class snacks.layout.Config
----@field wins table<string, snacks.win>
----@field layout snacks.layout.Box
+---@field show? boolean show the layout on creation (default: true)
+---@field wins table<string, snacks.win> windows to include in the layout
+---@field layout snacks.layout.Box layout definition
 ---@field fullscreen? boolean open in fullscreen
----@field hidden? string[] list of windows that will be excluded from the layout
+---@field hidden? string[] list of windows that will be excluded from the layout (but can be toggled)
 ---@field on_update? fun(layout: snacks.layout)
 local defaults = {
   layout = {
@@ -99,6 +100,11 @@ function M.new(opts)
   self.root:on("VimResized", function()
     self:update()
   end)
+  if self.opts.show ~= false then
+    vim.schedule(function()
+      self:show()
+    end)
+  end
   return self
 end
 
@@ -124,11 +130,13 @@ function M:each(cb, opts)
   _each(opts.box or self.opts.layout)
 end
 
+--- Check if a window is hidden
 ---@param win string
 function M:is_hidden(win)
   return self.opts.hidden and vim.tbl_contains(self.opts.hidden, win)
 end
 
+--- Toggle a window
 ---@param win string
 function M:toggle(win)
   self.opts.hidden = self.opts.hidden or {}
@@ -353,6 +361,7 @@ function M:maximize()
   self:update()
 end
 
+--- Close the layout
 ---@param opts? {wins?: boolean}
 function M:close(opts)
   if self.closed then
@@ -372,15 +381,18 @@ function M:close(opts)
   end
 end
 
+--- Check if layout is valid (visible)
 function M:valid()
   return self.root:valid()
 end
 
+--- Check if the window has been used in the layout
 ---@param w string
 function M:is_enabled(w)
   return not self:is_hidden(w) and self.wins[w].enabled
 end
 
+--- Show the layout
 function M:show()
   if self:valid() then
     return

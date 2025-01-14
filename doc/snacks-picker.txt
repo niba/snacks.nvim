@@ -12,8 +12,6 @@ Table of Contents                            *snacks-picker-table-of-contents*
 4. Types                                                 |snacks-picker-types|
 5. Module                                               |snacks-picker-module|
   - Snacks.picker()                     |snacks-picker-module-snacks.picker()|
-  - Snacks.picker.disable()     |snacks-picker-module-snacks.picker.disable()|
-  - Snacks.picker.enable()       |snacks-picker-module-snacks.picker.enable()|
   - Snacks.picker.pick()           |snacks-picker-module-snacks.picker.pick()|
   - Snacks.picker.select()       |snacks-picker-module-snacks.picker.select()|
 6. Sources                                             |snacks-picker-sources|
@@ -68,11 +66,7 @@ Table of Contents                            *snacks-picker-table-of-contents*
   - telescope                                |snacks-picker-layouts-telescope|
   - vertical                                  |snacks-picker-layouts-vertical|
   - vscode                                      |snacks-picker-layouts-vscode|
-8. Examples                                           |snacks-picker-examples|
-  - general                                   |snacks-picker-examples-general|
-  - todo_comments                       |snacks-picker-examples-todo_comments|
-  - trouble                                   |snacks-picker-examples-trouble|
-9. snacks.picker.actions                 |snacks-picker-snacks.picker.actions|
+8. snacks.picker.actions                 |snacks-picker-snacks.picker.actions|
   - Snacks.picker.actions.cmd()|snacks-picker-snacks.picker.actions-snacks.picker.actions.cmd()|
   - Snacks.picker.actions.copy()|snacks-picker-snacks.picker.actions-snacks.picker.actions.copy()|
   - Snacks.picker.actions.cycle_win()|snacks-picker-snacks.picker.actions-snacks.picker.actions.cycle_win()|
@@ -111,20 +105,11 @@ Table of Contents                            *snacks-picker-table-of-contents*
   - Snacks.picker.actions.toggle_live()|snacks-picker-snacks.picker.actions-snacks.picker.actions.toggle_live()|
   - Snacks.picker.actions.toggle_maximize()|snacks-picker-snacks.picker.actions-snacks.picker.actions.toggle_maximize()|
   - Snacks.picker.actions.toggle_preview()|snacks-picker-snacks.picker.actions-snacks.picker.actions.toggle_preview()|
-10. Examples                                          |snacks-picker-examples|
-  - general                                   |snacks-picker-examples-general|
-  - todo_comments                       |snacks-picker-examples-todo_comments|
-  - trouble                                   |snacks-picker-examples-trouble|
-11. Examples                                          |snacks-picker-examples|
-  - general                                   |snacks-picker-examples-general|
-  - todo_comments                       |snacks-picker-examples-todo_comments|
-  - trouble                                   |snacks-picker-examples-trouble|
-12. snacks.picker.core.picker        |snacks-picker-snacks.picker.core.picker|
+9. snacks.picker.core.picker         |snacks-picker-snacks.picker.core.picker|
   - picker:action()  |snacks-picker-snacks.picker.core.picker-picker:action()|
   - picker:close()    |snacks-picker-snacks.picker.core.picker-picker:close()|
   - picker:count()    |snacks-picker-snacks.picker.core.picker-picker:count()|
   - picker:current()|snacks-picker-snacks.picker.core.picker-picker:current()|
-  - picker:debug()    |snacks-picker-snacks.picker.core.picker-picker:debug()|
   - picker:empty()    |snacks-picker-snacks.picker.core.picker-picker:empty()|
   - picker:filter()  |snacks-picker-snacks.picker.core.picker-picker:filter()|
   - picker:find()      |snacks-picker-snacks.picker.core.picker-picker:find()|
@@ -135,8 +120,6 @@ Table of Contents                            *snacks-picker-table-of-contents*
   - picker:match()    |snacks-picker-snacks.picker.core.picker-picker:match()|
   - picker:selected()|snacks-picker-snacks.picker.core.picker-picker:selected()|
   - picker:set_layout()|snacks-picker-snacks.picker.core.picker-picker:set_layout()|
-  - picker:show()      |snacks-picker-snacks.picker.core.picker-picker:show()|
-  - picker:show_preview()|snacks-picker-snacks.picker.core.picker-picker:show_preview()|
   - picker:word()      |snacks-picker-snacks.picker.core.picker-picker:word()|
 
 ==============================================================================
@@ -474,7 +457,14 @@ TROUBLE                                       *snacks-picker-examples-trouble*
 4. Types                                                 *snacks-picker-types*
 
 >lua
-    ---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number}
+    ---@class snacks.picker.Last
+    ---@field opts snacks.picker.Config
+    ---@field selected snacks.picker.Item[]
+    ---@field filter snacks.picker.Filter
+<
+
+>lua
+    ---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number}
     ---@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean}
     ---@alias snacks.picker.Highlight snacks.picker.Text|snacks.picker.Extmark
     ---@alias snacks.picker.format fun(item:snacks.picker.Item, picker:snacks.Picker):snacks.picker.Highlight[]
@@ -544,13 +534,6 @@ Generic filter used by finders to pre-filter items
     ---@field preview? snacks.win.Config|{}
 <
 
->lua
-    ---@class snacks.picker.Last
-    ---@field opts snacks.picker.Config
-    ---@field selected snacks.picker.Item[]
-    ---@field filter snacks.picker.Filter
-<
-
 
 ==============================================================================
 5. Module                                               *snacks-picker-module*
@@ -584,21 +567,9 @@ Generic filter used by finders to pre-filter items
 <
 
 
-`Snacks.picker.disable()`                            *Snacks.picker.disable()*
-
->lua
-    Snacks.picker.disable()
-<
-
-
-`Snacks.picker.enable()`                              *Snacks.picker.enable()*
-
->lua
-    Snacks.picker.enable()
-<
-
-
 `Snacks.picker.pick()`                                  *Snacks.picker.pick()*
+
+Create a new picker
 
 >lua
     ---@param source? string
@@ -610,7 +581,10 @@ Generic filter used by finders to pre-filter items
 
 `Snacks.picker.select()`                              *Snacks.picker.select()*
 
+Implementation for `vim.ui.select`
+
 >lua
+    ---@type snacks.picker.ui_select
     Snacks.picker.select(...)
 <
 
@@ -696,6 +670,7 @@ Neovim command history
       finder = "vim_history",
       name = "cmd",
       format = "text",
+      preview = "none",
       layout = {
         preset = "vscode",
       },
@@ -1327,6 +1302,7 @@ Neovim search history
       finder = "vim_history",
       name = "search",
       format = "text",
+      preview = "none",
       layout = {
         preset = "vscode",
       },
@@ -1525,110 +1501,7 @@ VSCODE                                          *snacks-picker-layouts-vscode*
 
 
 ==============================================================================
-8. Examples                                           *snacks-picker-examples*
-
-
-GENERAL                                       *snacks-picker-examples-general*
-
->lua
-    {
-      "folke/snacks.nvim",
-      opts = {
-        picker = {},
-      },
-      keys = {
-        { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
-        { "<leader>/", function() Snacks.picker.grep() end, desc = "Grep" },
-        { "<leader>:", function() Snacks.picker.command_history() end, desc = "Command History" },
-        { "<leader><space>", function() Snacks.picker.files() end, desc = "Find Files" },
-        -- find
-        { "<leader>fb", function() Snacks.picker.buffers() end, desc = "Buffers" },
-        { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
-        { "<leader>ff", function() Snacks.picker.files() end, desc = "Find Files" },
-        { "<leader>fg", function() Snacks.picker.git_files() end, desc = "Find Git Files" },
-        { "<leader>fr", function() Snacks.picker.recent() end, desc = "Recent" },
-        -- git
-        { "<leader>gc", function() Snacks.picker.git_log() end, desc = "Git Log" },
-        { "<leader>gs", function() Snacks.picker.git_status() end, desc = "Git Status" },
-        -- Grep
-        { "<leader>sb", function() Snacks.picker.lines() end, desc = "Buffer Lines" },
-        { "<leader>sB", function() Snacks.picker.grep_buffers() end, desc = "Grep Open Buffers" },
-        { "<leader>sg", function() Snacks.picker.grep() end, desc = "Grep" },
-        { "<leader>sw", function() Snacks.picker.grep_word() end, desc = "Visual selection or word", mode = { "n", "x" } },
-        -- search
-        { '<leader>s"', function() Snacks.picker.registers() end, desc = "Registers" },
-        { "<leader>sa", function() Snacks.picker.autocmds() end, desc = "Autocmds" },
-        { "<leader>sc", function() Snacks.picker.command_history() end, desc = "Command History" },
-        { "<leader>sC", function() Snacks.picker.commands() end, desc = "Commands" },
-        { "<leader>sd", function() Snacks.picker.diagnostics() end, desc = "Diagnostics" },
-        { "<leader>sh", function() Snacks.picker.help() end, desc = "Help Pages" },
-        { "<leader>sH", function() Snacks.picker.highlights() end, desc = "Highlights" },
-        { "<leader>sj", function() Snacks.picker.jumps() end, desc = "Jumps" },
-        { "<leader>sk", function() Snacks.picker.keymaps() end, desc = "Keymaps" },
-        { "<leader>sl", function() Snacks.picker.loclist() end, desc = "Location List" },
-        { "<leader>sM", function() Snacks.picker.man() end, desc = "Man Pages" },
-        { "<leader>sm", function() Snacks.picker.marks() end, desc = "Marks" },
-        { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume" },
-        { "<leader>sq", function() Snacks.picker.qflist() end, desc = "Quickfix List" },
-        { "<leader>uC", function() Snacks.picker.colorschemes() end, desc = "Colorschemes" },
-        { "<leader>qp", function() Snacks.picker.projects() end, desc = "Projects" },
-        -- LSP
-        { "gd", function() Snacks.picker.lsp_definitions() end, desc = "Goto Definition" },
-        { "gr", function() Snacks.picker.lsp_references() end, nowait = true, desc = "References" },
-        { "gI", function() Snacks.picker.lsp_implementations() end, desc = "Goto Implementation" },
-        { "gy", function() Snacks.picker.lsp_type_definitions() end, desc = "Goto T[y]pe Definition" },
-        { "<leader>ss", function() Snacks.picker.lsp_symbols() end, desc = "LSP Symbols" },
-      },
-    }
-<
-
-
-TODO_COMMENTS                           *snacks-picker-examples-todo_comments*
-
->lua
-    {
-      "folke/todo-comments.nvim",
-      optional = true,
-      keys = {
-        { "<leader>st", function() Snacks.picker.todo_comments() end, desc = "Todo" },
-        { "<leader>sT", function () Snacks.picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } }) end, desc = "Todo/Fix/Fixme" },
-      },
-    }
-<
-
-
-TROUBLE                                       *snacks-picker-examples-trouble*
-
->lua
-    {
-      "folke/trouble.nvim",
-      optional = true,
-      specs = {
-        "folke/snacks.nvim",
-        opts = function(_, opts)
-          return vim.tbl_deep_extend("force", opts or {}, {
-            picker = {
-              actions = require("trouble.sources.snacks").actions,
-              win = {
-                input = {
-                  keys = {
-                    ["<c-t>"] = {
-                      "trouble_open",
-                      mode = { "n", "i" },
-                    },
-                  },
-                },
-              },
-            },
-          })
-        end,
-      },
-    }
-<
-
-
-==============================================================================
-9. snacks.picker.actions                 *snacks-picker-snacks.picker.actions*
+8. snacks.picker.actions                 *snacks-picker-snacks.picker.actions*
 
 >lua
     ---@class snacks.picker.actions
@@ -1916,213 +1789,7 @@ SNACKS.PICKER.ACTIONS.TOGGLE_PREVIEW()*snacks-picker-snacks.picker.actions-snack
 
 
 ==============================================================================
-10. Examples                                          *snacks-picker-examples*
-
-
-GENERAL                                       *snacks-picker-examples-general*
-
->lua
-    {
-      "folke/snacks.nvim",
-      opts = {
-        picker = {},
-      },
-      keys = {
-        { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
-        { "<leader>/", function() Snacks.picker.grep() end, desc = "Grep" },
-        { "<leader>:", function() Snacks.picker.command_history() end, desc = "Command History" },
-        { "<leader><space>", function() Snacks.picker.files() end, desc = "Find Files" },
-        -- find
-        { "<leader>fb", function() Snacks.picker.buffers() end, desc = "Buffers" },
-        { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
-        { "<leader>ff", function() Snacks.picker.files() end, desc = "Find Files" },
-        { "<leader>fg", function() Snacks.picker.git_files() end, desc = "Find Git Files" },
-        { "<leader>fr", function() Snacks.picker.recent() end, desc = "Recent" },
-        -- git
-        { "<leader>gc", function() Snacks.picker.git_log() end, desc = "Git Log" },
-        { "<leader>gs", function() Snacks.picker.git_status() end, desc = "Git Status" },
-        -- Grep
-        { "<leader>sb", function() Snacks.picker.lines() end, desc = "Buffer Lines" },
-        { "<leader>sB", function() Snacks.picker.grep_buffers() end, desc = "Grep Open Buffers" },
-        { "<leader>sg", function() Snacks.picker.grep() end, desc = "Grep" },
-        { "<leader>sw", function() Snacks.picker.grep_word() end, desc = "Visual selection or word", mode = { "n", "x" } },
-        -- search
-        { '<leader>s"', function() Snacks.picker.registers() end, desc = "Registers" },
-        { "<leader>sa", function() Snacks.picker.autocmds() end, desc = "Autocmds" },
-        { "<leader>sc", function() Snacks.picker.command_history() end, desc = "Command History" },
-        { "<leader>sC", function() Snacks.picker.commands() end, desc = "Commands" },
-        { "<leader>sd", function() Snacks.picker.diagnostics() end, desc = "Diagnostics" },
-        { "<leader>sh", function() Snacks.picker.help() end, desc = "Help Pages" },
-        { "<leader>sH", function() Snacks.picker.highlights() end, desc = "Highlights" },
-        { "<leader>sj", function() Snacks.picker.jumps() end, desc = "Jumps" },
-        { "<leader>sk", function() Snacks.picker.keymaps() end, desc = "Keymaps" },
-        { "<leader>sl", function() Snacks.picker.loclist() end, desc = "Location List" },
-        { "<leader>sM", function() Snacks.picker.man() end, desc = "Man Pages" },
-        { "<leader>sm", function() Snacks.picker.marks() end, desc = "Marks" },
-        { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume" },
-        { "<leader>sq", function() Snacks.picker.qflist() end, desc = "Quickfix List" },
-        { "<leader>uC", function() Snacks.picker.colorschemes() end, desc = "Colorschemes" },
-        { "<leader>qp", function() Snacks.picker.projects() end, desc = "Projects" },
-        -- LSP
-        { "gd", function() Snacks.picker.lsp_definitions() end, desc = "Goto Definition" },
-        { "gr", function() Snacks.picker.lsp_references() end, nowait = true, desc = "References" },
-        { "gI", function() Snacks.picker.lsp_implementations() end, desc = "Goto Implementation" },
-        { "gy", function() Snacks.picker.lsp_type_definitions() end, desc = "Goto T[y]pe Definition" },
-        { "<leader>ss", function() Snacks.picker.lsp_symbols() end, desc = "LSP Symbols" },
-      },
-    }
-<
-
-
-TODO_COMMENTS                           *snacks-picker-examples-todo_comments*
-
->lua
-    {
-      "folke/todo-comments.nvim",
-      optional = true,
-      keys = {
-        { "<leader>st", function() Snacks.picker.todo_comments() end, desc = "Todo" },
-        { "<leader>sT", function () Snacks.picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } }) end, desc = "Todo/Fix/Fixme" },
-      },
-    }
-<
-
-
-TROUBLE                                       *snacks-picker-examples-trouble*
-
->lua
-    {
-      "folke/trouble.nvim",
-      optional = true,
-      specs = {
-        "folke/snacks.nvim",
-        opts = function(_, opts)
-          return vim.tbl_deep_extend("force", opts or {}, {
-            picker = {
-              actions = require("trouble.sources.snacks").actions,
-              win = {
-                input = {
-                  keys = {
-                    ["<c-t>"] = {
-                      "trouble_open",
-                      mode = { "n", "i" },
-                    },
-                  },
-                },
-              },
-            },
-          })
-        end,
-      },
-    }
-<
-
-
-==============================================================================
-11. Examples                                          *snacks-picker-examples*
-
-
-GENERAL                                       *snacks-picker-examples-general*
-
->lua
-    {
-      "folke/snacks.nvim",
-      opts = {
-        picker = {},
-      },
-      keys = {
-        { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
-        { "<leader>/", function() Snacks.picker.grep() end, desc = "Grep" },
-        { "<leader>:", function() Snacks.picker.command_history() end, desc = "Command History" },
-        { "<leader><space>", function() Snacks.picker.files() end, desc = "Find Files" },
-        -- find
-        { "<leader>fb", function() Snacks.picker.buffers() end, desc = "Buffers" },
-        { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
-        { "<leader>ff", function() Snacks.picker.files() end, desc = "Find Files" },
-        { "<leader>fg", function() Snacks.picker.git_files() end, desc = "Find Git Files" },
-        { "<leader>fr", function() Snacks.picker.recent() end, desc = "Recent" },
-        -- git
-        { "<leader>gc", function() Snacks.picker.git_log() end, desc = "Git Log" },
-        { "<leader>gs", function() Snacks.picker.git_status() end, desc = "Git Status" },
-        -- Grep
-        { "<leader>sb", function() Snacks.picker.lines() end, desc = "Buffer Lines" },
-        { "<leader>sB", function() Snacks.picker.grep_buffers() end, desc = "Grep Open Buffers" },
-        { "<leader>sg", function() Snacks.picker.grep() end, desc = "Grep" },
-        { "<leader>sw", function() Snacks.picker.grep_word() end, desc = "Visual selection or word", mode = { "n", "x" } },
-        -- search
-        { '<leader>s"', function() Snacks.picker.registers() end, desc = "Registers" },
-        { "<leader>sa", function() Snacks.picker.autocmds() end, desc = "Autocmds" },
-        { "<leader>sc", function() Snacks.picker.command_history() end, desc = "Command History" },
-        { "<leader>sC", function() Snacks.picker.commands() end, desc = "Commands" },
-        { "<leader>sd", function() Snacks.picker.diagnostics() end, desc = "Diagnostics" },
-        { "<leader>sh", function() Snacks.picker.help() end, desc = "Help Pages" },
-        { "<leader>sH", function() Snacks.picker.highlights() end, desc = "Highlights" },
-        { "<leader>sj", function() Snacks.picker.jumps() end, desc = "Jumps" },
-        { "<leader>sk", function() Snacks.picker.keymaps() end, desc = "Keymaps" },
-        { "<leader>sl", function() Snacks.picker.loclist() end, desc = "Location List" },
-        { "<leader>sM", function() Snacks.picker.man() end, desc = "Man Pages" },
-        { "<leader>sm", function() Snacks.picker.marks() end, desc = "Marks" },
-        { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume" },
-        { "<leader>sq", function() Snacks.picker.qflist() end, desc = "Quickfix List" },
-        { "<leader>uC", function() Snacks.picker.colorschemes() end, desc = "Colorschemes" },
-        { "<leader>qp", function() Snacks.picker.projects() end, desc = "Projects" },
-        -- LSP
-        { "gd", function() Snacks.picker.lsp_definitions() end, desc = "Goto Definition" },
-        { "gr", function() Snacks.picker.lsp_references() end, nowait = true, desc = "References" },
-        { "gI", function() Snacks.picker.lsp_implementations() end, desc = "Goto Implementation" },
-        { "gy", function() Snacks.picker.lsp_type_definitions() end, desc = "Goto T[y]pe Definition" },
-        { "<leader>ss", function() Snacks.picker.lsp_symbols() end, desc = "LSP Symbols" },
-      },
-    }
-<
-
-
-TODO_COMMENTS                           *snacks-picker-examples-todo_comments*
-
->lua
-    {
-      "folke/todo-comments.nvim",
-      optional = true,
-      keys = {
-        { "<leader>st", function() Snacks.picker.todo_comments() end, desc = "Todo" },
-        { "<leader>sT", function () Snacks.picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } }) end, desc = "Todo/Fix/Fixme" },
-      },
-    }
-<
-
-
-TROUBLE                                       *snacks-picker-examples-trouble*
-
->lua
-    {
-      "folke/trouble.nvim",
-      optional = true,
-      specs = {
-        "folke/snacks.nvim",
-        opts = function(_, opts)
-          return vim.tbl_deep_extend("force", opts or {}, {
-            picker = {
-              actions = require("trouble.sources.snacks").actions,
-              win = {
-                input = {
-                  keys = {
-                    ["<c-t>"] = {
-                      "trouble_open",
-                      mode = { "n", "i" },
-                    },
-                  },
-                },
-              },
-            },
-          })
-        end,
-      },
-    }
-<
-
-
-==============================================================================
-12. snacks.picker.core.picker        *snacks-picker-snacks.picker.core.picker*
+9. snacks.picker.core.picker         *snacks-picker-snacks.picker.core.picker*
 
 >lua
     ---@class snacks.Picker
@@ -2186,16 +1853,9 @@ Get the current item at the cursor
 <
 
 
-PICKER:DEBUG()        *snacks-picker-snacks.picker.core.picker-picker:debug()*
-
->lua
-    ---@param name string
-    ---@param start? number
-    picker:debug(name, start)
-<
-
-
 PICKER:EMPTY()        *snacks-picker-snacks.picker.core.picker-picker:empty()*
+
+Check if the picker is empty
 
 >lua
     picker:empty()
@@ -2216,7 +1876,7 @@ PICKER:FIND()          *snacks-picker-snacks.picker.core.picker-picker:find()*
 Clear the list and run the finder and matcher
 
 >lua
-    ---@param opts? {on_done?: fun()}
+    ---@param opts? {on_done?: fun()} Callback when done
     picker:find(opts)
 <
 
@@ -2289,20 +1949,6 @@ layout configuration.
 >lua
     ---@param layout? string|snacks.picker.layout.Config
     picker:set_layout(layout)
-<
-
-
-PICKER:SHOW()          *snacks-picker-snacks.picker.core.picker-picker:show()*
-
->lua
-    picker:show()
-<
-
-
-PICKER:SHOW_PREVIEW()*snacks-picker-snacks.picker.core.picker-picker:show_preview()*
-
->lua
-    picker:show_preview()
 <
 
 

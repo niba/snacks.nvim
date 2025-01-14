@@ -143,6 +143,7 @@ function M:init_layout(layout)
     backdrop = false
   end
   self.layout = Snacks.layout.new(vim.tbl_deep_extend("force", opts, {
+    show = false,
     win = {
       wo = {
         winhighlight = Snacks.picker.highlight.winhl("SnacksPicker"),
@@ -238,16 +239,7 @@ function M.resume()
   return ret
 end
 
----@param name string
----@param start? number
-function M:debug(name, start)
-  do
-    return
-  end
-  local delta = (uv.hrtime() - (start or self.start_time)) / 1e6
-  Snacks.notify.info(("`%s` took %.2fms"):format(name, delta))
-end
-
+---@hide
 function M:show_preview()
   if self.opts.on_change then
     self.opts.on_change(self, self:current())
@@ -258,6 +250,7 @@ function M:show_preview()
   self.preview:show(self)
 end
 
+---@hide
 function M:show()
   if self.shown or self.closed then
     return
@@ -309,11 +302,12 @@ function M:selected(opts)
   return ret
 end
 
--- Total number of items in the picker
+--- Total number of items in the picker
 function M:count()
   return self.finder:count()
 end
 
+--- Check if the picker is empty
 function M:empty()
   return self:count() == 0
 end
@@ -427,7 +421,7 @@ function M:action(actions)
 end
 
 --- Clear the list and run the finder and matcher
----@param opts? {on_done?: fun()}
+---@param opts? {on_done?: fun()} Callback when done
 function M:find(opts)
   self.list:clear()
   self.finder:run(self)

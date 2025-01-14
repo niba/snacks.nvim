@@ -17,7 +17,7 @@ local M = setmetatable({}, {
   end,
   ---@param M snacks.picker
   __index = function(M, k)
-    if k == "setup" or type(k) ~= "string" then
+    if type(k) ~= "string" then
       return
     end
     local mods = {
@@ -49,11 +49,10 @@ M.meta = {
   merge = { config = "config.defaults", picker = "core.picker", "actions" },
 }
 
-local ui_select = vim.ui.select
-
 -- create actual picker functions for autocomplete
 vim.schedule(M.config.setup)
 
+--- Create a new picker
 ---@param source? string
 ---@param opts? snacks.picker.Config
 ---@overload fun(opts: snacks.picker.Config): snacks.Picker
@@ -71,23 +70,17 @@ function M.pick(source, opts)
   return require("snacks.picker.core.picker").new(opts)
 end
 
+--- Implementation for `vim.ui.select`
+---@type snacks.picker.ui_select
 function M.select(...)
   return require("snacks.picker.select").select(...)
 end
 
-function M.enable()
-  local config = M.config.get()
-  if config.ui_select then
+---@private
+function M.setup()
+  if M.config.get().ui_select then
     vim.ui.select = M.select
-    -- FIXME: remove
-    vim.defer_fn(function()
-      vim.ui.select = M.select
-    end, 100)
   end
-end
-
-function M.disable()
-  vim.ui.select = ui_select
 end
 
 ---@private
