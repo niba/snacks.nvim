@@ -91,7 +91,7 @@ function M.status(opts)
     args = args,
     ---@param item snacks.picker.finder.Item
     transform = function(item)
-      local status, file = item.text:match("^%s*(%S+)%s+(.*)$")
+      local status, file = item.text:sub(1, 2), item.text:sub(4)
       item.cwd = cwd
       item.status = status
       item.file = file
