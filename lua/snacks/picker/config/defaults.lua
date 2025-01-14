@@ -125,11 +125,12 @@ local defaults = {
         ["<c-n>"] = "list_down",
         ["<c-p>"] = "list_up",
         ["<a-w>"] = "cycle_win",
+        ["<Esc>"] = "close",
       },
     },
     input = {
       keys = {
-        ["<esc>"] = "close",
+        ["<Esc>"] = "close",
         ["G"] = "list_bottom",
         ["gg"] = "list_top",
         ["j"] = "list_down",
@@ -175,6 +176,7 @@ local defaults = {
         colorcolumn = "",
       },
       keys = {
+        ["<Esc>"] = "close",
         ["q"] = "close",
         ["i"] = "focus_input",
         ["<ScrollWheelDown>"] = "list_scroll_wheel_down",
