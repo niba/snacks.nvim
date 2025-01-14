@@ -88,20 +88,26 @@ function M:show(picker)
   self.item = item
   if item then
     local buf = self.win.buf
-    self.preview(setmetatable({
-      preview = self,
-      item = item,
-      prev = prev,
-      picker = picker,
-    }, {
-      __index = function(_, k)
-        if k == "buf" then
-          return self.win.buf
-        elseif k == "win" then
-          return self.win.win
-        end
-      end,
-    }))
+    local ok, err = pcall(
+      self.preview,
+      setmetatable({
+        preview = self,
+        item = item,
+        prev = prev,
+        picker = picker,
+      }, {
+        __index = function(_, k)
+          if k == "buf" then
+            return self.win.buf
+          elseif k == "win" then
+            return self.win.win
+          end
+        end,
+      })
+    )
+    if not ok then
+      self:notify(err, "error")
+    end
     if self.win.buf ~= buf then
       self:clear(buf)
     end
@@ -203,14 +209,22 @@ function M:loc()
 end
 
 ---@param msg string
----@param level "info" | "warn" | "error"
-function M:notify(msg, level)
-  local lines = vim.split(msg, "\n", { plain = true })
+---@param level? "info" | "warn" | "error"
+---@param opts? {item?:boolean}
+function M:notify(msg, level, opts)
+  level = level or "info"
+  local lines = vim.split(level .. ": " .. msg, "\n", { plain = true })
+  local msg_len = #lines
+  if not (opts and opts.item == false) then
+    lines[#lines + 1] = ""
+    vim.list_extend(lines, vim.split(vim.inspect(self.item), "\n", { plain = true }))
+  end
   vim.api.nvim_buf_set_lines(self.win.buf, 0, -1, false, lines)
   vim.api.nvim_buf_set_extmark(self.win.buf, ns, 0, 0, {
     hl_group = "Diagnostic" .. level:sub(1, 1):upper() .. level:sub(2),
-    end_row = #lines,
+    end_row = msg_len,
   })
+  self:highlight({ lang = "lua" })
 end
 
 return M
