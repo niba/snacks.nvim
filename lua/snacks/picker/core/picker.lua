@@ -7,16 +7,16 @@ Async.BUDGET = 20
 ---@class snacks.Picker
 ---@field opts snacks.picker.Config
 ---@field finder snacks.picker.Finder
----@field format snacks.picker.Formatter
+---@field format snacks.picker.format
 ---@field input snacks.picker.input
 ---@field layout snacks.layout
----@field resolved_layout snacks.picker.Layout
+---@field resolved_layout snacks.picker.layout.Config
 ---@field list snacks.picker.list
 ---@field matcher snacks.picker.Matcher
 ---@field main number
 ---@field preview snacks.picker.Preview
 ---@field shown? boolean
----@field sorter snacks.matcher.sorter
+---@field sort snacks.picker.sort
 ---@field updater uv.uv_timer_t
 ---@field start_time number
 ---@field source_name string
@@ -64,7 +64,10 @@ function M.new(opts)
   self.hist_idx = #M.history + 1
   self.hist_cursor = self.hist_idx
 
-  self.sorter = self.opts.sorter or require("snacks.picker.sorter").default()
+  local sort = self.opts.sort or require("snacks.picker.sort").default()
+  sort = type(sort) == "table" and require("snacks.picker.sort").default(sort) or sort
+  ---@cast sort snacks.picker.sort
+  self.sort = sort
 
   self.updater = assert(uv.new_timer())
   self.matcher = require("snacks.picker.core.matcher").new(self.opts.matcher)
@@ -76,7 +79,7 @@ function M.new(opts)
   local format = type(self.opts.format) == "string" and Snacks.picker.format[self.opts.format]
     or self.opts.format
     or Snacks.picker.format.file
-  ---@cast format snacks.picker.Formatter
+  ---@cast format snacks.picker.format
   self.format = format
 
   M._pickers[self] = true
@@ -126,7 +129,7 @@ function M.new(opts)
   return self
 end
 
----@param layout? snacks.picker.Layout
+---@param layout? snacks.picker.layout.Config
 ---@private
 function M:init_layout(layout)
   layout = layout or Snacks.picker.config.layout(self.opts)
@@ -169,11 +172,11 @@ end
 
 --- Set the picker layout. Can be either the name of a preset layout
 --- or a custom layout configuration.
----@param layout? string|snacks.picker.Layout
+---@param layout? string|snacks.picker.layout.Config
 function M:set_layout(layout)
   layout = layout or Snacks.picker.config.layout(self.opts)
   layout = type(layout) == "string" and Snacks.picker.config.layout(layout) or layout
-  ---@cast layout snacks.picker.Layout
+  ---@cast layout snacks.picker.layout.Config
   layout.cycle = nil -- not needed for applying layout
   if vim.deep_equal(layout, self.resolved_layout) then
     -- no need to update
@@ -200,7 +203,7 @@ function M:word()
 end
 
 --- Update title templates
----@private
+---@hide
 function M:update_titles()
   local data = {
     source = self.source_name,
@@ -252,7 +255,7 @@ function M:show_preview()
   if not self.preview.win:valid() then
     return
   end
-  self.preview:preview(self)
+  self.preview:show(self)
 end
 
 function M:show()

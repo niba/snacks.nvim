@@ -2,10 +2,10 @@ local M = {}
 
 ---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number}
 ---@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean}
----@alias snacks.picker.Highlights (snacks.picker.Text|snacks.picker.Extmark)[]
----@alias snacks.picker.Formatter fun(item:snacks.picker.Item, picker:snacks.Picker):snacks.picker.Highlights
----@alias snacks.matcher.sorter fun(a:snacks.picker.Item, b:snacks.picker.Item):boolean
----@alias snacks.picker.Previewer fun(ctx: snacks.picker.preview.ctx):boolean?
+---@alias snacks.picker.Highlight snacks.picker.Text|snacks.picker.Extmark
+---@alias snacks.picker.format fun(item:snacks.picker.Item, picker:snacks.Picker):snacks.picker.Highlight[]
+---@alias snacks.picker.preview fun(ctx: snacks.picker.preview.ctx):boolean?
+---@alias snacks.picker.sort fun(a:snacks.picker.Item, b:snacks.picker.Item):boolean
 
 ---@class snacks.picker.finder.Item: snacks.picker.Item
 ---@field idx? number
@@ -26,7 +26,7 @@ local M = {}
 ---@field text string
 ---@field pos? {[1]:number, [2]:number}
 ---@field end_pos? {[1]:number, [2]:number}
----@field highlights? snacks.picker.Highlights[]
+---@field highlights? snacks.picker.Highlight[][]
 
 ---@class snacks.picker.sources.Config
 
@@ -39,7 +39,7 @@ local M = {}
 ---@field max_line_length? number defaults to 500
 ---@field ft? string defaults to auto-detect
 
----@class snacks.picker.Layout
+---@class snacks.picker.layout.Config
 ---@field layout snacks.layout.Box
 ---@field reverse? boolean when true, the list will be reversed (bottom-up)
 ---@field fullscreen? boolean open in fullscreen
@@ -53,31 +53,36 @@ local M = {}
 ---@field preview? snacks.win.Config|{}
 
 ---@class snacks.picker.Config
----@field prompt? string
----@field pattern? string|fun(picker:snacks.Picker):string Pattern used to filter items by the matcher
----@field search? string|fun(picker:snacks.Picker):string Initial search string used by finders
----@field cwd? string
----@field live? boolean
+---@field source? string source name and config to use
+---@field pattern? string|fun(picker:snacks.Picker):string pattern used to filter items by the matcher
+---@field search? string|fun(picker:snacks.Picker):string search string used by finders
+---@field cwd? string current working directory
+---@field live? boolean when true, typing will trigger live searches
 ---@field limit? number when set, the finder will stop after finding this number of items. useful for live searches
----@field ui_select? boolean
----@field auto_confirm? boolean Automatically confirm if there is only one item
----@field format? snacks.picker.Formatter|string
----@field items? snacks.picker.finder.Item[]
----@field finder? snacks.picker.finder|string
----@field matcher? snacks.picker.matcher.Config
----@field sorter? snacks.matcher.sorter
----@field actions? table<string, snacks.picker.Action.spec>
+---@field ui_select? boolean set `vim.ui.select` to a snacks picker
+--- Source definition
+---@field items? snacks.picker.finder.Item[] items to show instead of using a finder
+---@field format? snacks.picker.format|string format function or preset
+---@field finder? snacks.picker.finder|string finder function or preset
+---@field preview? snacks.picker.preview|string preview function or preset
+---@field matcher? snacks.picker.matcher.Config matcher config
+---@field sort? snacks.picker.sort|snacks.picker.sort.Config sort function or config
+--- UI
 ---@field win? snacks.picker.win.Config
----@field layout? snacks.picker.Layout|{}|fun(source:string):snacks.picker.Layout
----@field preview? snacks.picker.preview.Config
----@field previewer? snacks.picker.Previewer|string
----@field sources? snacks.picker.sources.Config|{}
+---@field layout? snacks.picker.layout.Config|{}|fun(source:string):snacks.picker.layout.Config
 ---@field icons? snacks.picker.icons
----@field source? string
+---@field prompt? string prompt text / icon
+--- Preset options
+---@field previewers? snacks.picker.preview.Config
+---@field sources? snacks.picker.sources.Config|{}
+---@field layouts? table<string, snacks.picker.layout.Config>
+--- Actions
+---@field actions? table<string, snacks.picker.Action.spec> actions used by keymaps
+---@field confirm? snacks.picker.Action.spec shortcut for confirm action
+---@field auto_confirm? boolean automatically confirm if there is only one item
+---@field main? snacks.picker.main.Config main editor window config
 ---@field on_change? fun(picker:snacks.Picker, item:snacks.picker.Item) called when the cursor changes
 ---@field on_show? fun(picker:snacks.Picker) called when the picker is shown
----@field layouts? table<string, snacks.picker.Layout>
----@field main? snacks.picker.main.Config
 local defaults = {
   prompt = " ",
   sources = {},
@@ -88,7 +93,7 @@ local defaults = {
     end,
   },
   ui_select = true, -- replace `vim.ui.select` with the snacks picker
-  preview = {
+  previewers = {
     file = {
       max_size = 1024 * 1024, -- 1MB
       max_line_length = 500,

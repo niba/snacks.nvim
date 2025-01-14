@@ -57,7 +57,7 @@ function M.new(picker)
   self.dirty = true
   self.topk = require("snacks.picker.util.minheap").new({
     capacity = 1000,
-    cmp = self.picker.sorter,
+    cmp = self.picker.sort,
   })
   self.win:on("CursorMoved", function()
     if not self.win:valid() then

@@ -8,7 +8,7 @@ local M = {}
 M.autocmds = {
   finder = "vim_autocmds",
   format = "autocmd",
-  previewer = "preview",
+  preview = "preview",
 }
 
 ---@class snacks.picker.buffers.Config: snacks.picker.Config
@@ -30,29 +30,25 @@ M.buffers = {
 M.cliphist = {
   finder = "system_cliphist",
   format = "text",
-  previewer = "preview",
-  actions = {
-    confirm = { "copy", "close" },
-  },
+  preview = "preview",
+  confirm = { "copy", "close" },
 }
 
 -- Neovim colorschemes with live preview
 M.colorschemes = {
   finder = "vim_colorschemes",
   format = "text",
-  previewer = "colorscheme",
+  preview = "colorscheme",
   preset = "vertical",
-  actions = {
-    confirm = function(picker, item)
-      picker:close()
-      if item then
-        picker.preview.state.colorscheme = nil
-        vim.schedule(function()
-          vim.cmd("colorscheme " .. item.text)
-        end)
-      end
-    end,
-  },
+  confirm = function(picker, item)
+    picker:close()
+    if item then
+      picker.preview.state.colorscheme = nil
+      vim.schedule(function()
+        vim.cmd("colorscheme " .. item.text)
+      end)
+    end
+  end,
 }
 
 -- Neovim command history
@@ -64,15 +60,15 @@ M.command_history = {
   layout = {
     preset = "vscode",
   },
-  actions = { confirm = "cmd" },
+  confirm = "cmd",
 }
 
 -- Neovim commands
 M.commands = {
   finder = "vim_commands",
   format = "text",
-  previewer = "preview",
-  actions = { confirm = "cmd" },
+  preview = "preview",
+  confirm = "cmd",
 }
 
 ---@class snacks.picker.diagnostics.Config: snacks.picker.Config
@@ -81,7 +77,7 @@ M.commands = {
 M.diagnostics = {
   finder = "diagnostics",
   format = "diagnostic",
-  sorter = Snacks.picker.sorter.default({
+  sort = {
     fields = {
       "is_current",
       "is_cwd",
@@ -89,7 +85,7 @@ M.diagnostics = {
       "file",
       "lnum",
     },
-  }),
+  },
   -- only show diagnostics from the cwd by default
   filter = { cwd = true },
 }
@@ -98,9 +94,9 @@ M.diagnostics = {
 M.diagnostics_buffer = {
   finder = "diagnostics",
   format = "diagnostic",
-  sorter = Snacks.picker.sorter.default({
+  sort = {
     fields = { "severity", "file", "lnum" },
-  }),
+  },
   filter = { buf = true },
 }
 
@@ -138,34 +134,34 @@ M.git_files = {
 M.git_log = {
   finder = "git_log",
   format = "git_log",
-  previewer = "git_show",
-  actions = { confirm = "close" },
+  preview = "git_show",
+  confirm = "close",
 }
 
 ---@type snacks.picker.git.log.Config
 M.git_log_file = {
   finder = "git_log",
   format = "git_log",
-  previewer = "git_show",
+  preview = "git_show",
   current_file = true,
   follow = true,
-  actions = { confirm = "close" },
+  confirm = "close",
 }
 
 ---@type snacks.picker.git.log.Config
 M.git_log_line = {
   finder = "git_log",
   format = "git_log",
-  previewer = "git_show",
+  preview = "git_show",
   current_line = true,
   follow = true,
-  actions = { confirm = "close" },
+  confirm = "close",
 }
 
 M.git_status = {
   finder = "git_status",
   format = "git_status",
-  previewer = "git_status",
+  preview = "git_status",
 }
 
 ---@class snacks.picker.grep.Config: snacks.picker.proc.Config
@@ -219,15 +215,13 @@ M.help = {
       minimal = true,
     },
   },
-  actions = {
-    confirm = "help",
-  },
+  confirm = "help",
 }
 
 M.highlights = {
   finder = "vim_highlights",
   format = "hl",
-  previewer = "preview",
+  preview = "preview",
 }
 
 M.jumps = {
@@ -242,18 +236,16 @@ M.jumps = {
 M.keymaps = {
   finder = "vim_keymaps",
   format = "keymap",
-  previewer = "preview",
+  preview = "preview",
   global = true,
   ["local"] = true,
   modes = { "n", "v", "x", "s", "o", "i", "c", "t" },
-  actions = {
-    confirm = function(picker, item)
-      picker:close()
-      if item then
-        vim.api.nvim_input(item.item.lhs)
-      end
-    end,
-  },
+  confirm = function(picker, item)
+    picker:close()
+    if item then
+      vim.api.nvim_input(item.item.lhs)
+    end
+  end,
 }
 
 -- Search lines in the current buffer
@@ -386,17 +378,15 @@ M.lsp_type_definitions = {
 M.man = {
   finder = "system_man",
   format = "man",
-  previewer = "man",
-  actions = {
-    confirm = function(picker, item)
-      picker:close()
-      if item then
-        vim.schedule(function()
-          vim.cmd("Man " .. item.ref)
-        end)
-      end
-    end,
-  },
+  preview = "man",
+  confirm = function(picker, item)
+    picker:close()
+    if item then
+      vim.schedule(function()
+        vim.cmd("Man " .. item.ref)
+      end)
+    end
+  end,
 }
 
 ---@class snacks.picker.marks.Config: snacks.picker.Config
@@ -413,14 +403,12 @@ M.marks = {
 M.pickers = {
   finder = "meta_pickers",
   format = "text",
-  actions = {
-    confirm = function(picker, item)
-      picker:close()
-      if item then
-        Snacks.picker(item.text)
-      end
-    end,
-  },
+  confirm = function(picker, item)
+    picker:close()
+    if item then
+      Snacks.picker(item.text)
+    end
+  end,
 }
 
 M.picker_actions = {
@@ -451,9 +439,7 @@ M.picker_preview = {
 M.projects = {
   finder = "recent_projects",
   format = "file",
-  actions = {
-    confirm = "load_session",
-  },
+  confirm = "load_session",
   win = {
     preview = {
       minimal = true,
@@ -487,10 +473,8 @@ M.recent = {
 M.registers = {
   finder = "vim_registers",
   format = "register",
-  previewer = "preview",
-  actions = {
-    confirm = { "copy", "close" },
-  },
+  preview = "preview",
+  confirm = { "copy", "close" },
 }
 
 -- Special picker that resumes the last picker
@@ -505,16 +489,14 @@ M.search_history = {
   layout = {
     preset = "vscode",
   },
-  actions = { confirm = "search" },
+  confirm = "search",
 }
 
 -- Open a project from zoxide
 M.zoxide = {
   finder = "files_zoxide",
   format = "file",
-  actions = {
-    confirm = "load_session",
-  },
+  confirm = "load_session",
   win = {
     preview = {
       minimal = true,

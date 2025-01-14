@@ -82,7 +82,7 @@ function M.get_highlights(opts)
   return ret
 end
 
----@param line snacks.picker.Highlights
+---@param line snacks.picker.Highlight[]
 function M.offset(line)
   local offset = 0
   for _, t in ipairs(line) do
@@ -97,7 +97,7 @@ function M.offset(line)
   return offset
 end
 
----@param line snacks.picker.Highlights
+---@param line snacks.picker.Highlight[]
 ---@param item snacks.picker.Item
 ---@param text string
 ---@param opts? {hl_group?:string, lang?:string}
@@ -114,7 +114,7 @@ function M.format(item, text, line, opts)
   line[#line + 1] = { text, opts.hl_group }
 end
 
----@param line snacks.picker.Highlights
+---@param line snacks.picker.Highlight[]
 ---@param patterns table<string,string>
 function M.highlight(line, patterns)
   local offset = M.offset(line)
@@ -145,7 +145,7 @@ function M.highlight(line, patterns)
   end
 end
 
----@param line snacks.picker.Highlights
+---@param line snacks.picker.Highlight[]
 function M.markdown(line)
   M.highlight(line, {
     ["`.-`"] = "SnacksPickerCode",

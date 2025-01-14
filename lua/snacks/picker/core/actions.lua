@@ -50,7 +50,9 @@ function M.resolve(action, picker, name)
     }
   elseif type(action) == "string" then
     return M.resolve(
-      (picker.opts.actions or {})[action] or require("snacks.picker.actions")[action],
+      action == "confirm" and picker.opts.confirm
+        or (picker.opts.actions or {})[action]
+        or require("snacks.picker.actions")[action],
       picker,
       action:gsub("_ ", " ")
     )

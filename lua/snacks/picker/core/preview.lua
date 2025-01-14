@@ -1,7 +1,7 @@
 ---@class snacks.picker.Preview
 ---@field item? snacks.picker.Item
 ---@field win snacks.win
----@field previewer snacks.picker.Previewer
+---@field preview snacks.picker.preview
 ---@field state table<string, any>
 ---@field main? number
 ---@field win_opts {main: snacks.win.Config, layout: snacks.win.Config, win: snacks.win.Config}
@@ -64,10 +64,10 @@ function M.new(opts, main)
     self:clear(self.win.buf)
   end, { win = true })
 
-  local previewer = opts.previewer or Snacks.picker.preview.file
-  previewer = type(previewer) == "string" and Snacks.picker.preview[previewer] or previewer
-  ---@cast previewer snacks.picker.Previewer
-  self.previewer = previewer
+  local preview = opts.preview or Snacks.picker.preview.file
+  preview = type(preview) == "string" and Snacks.picker.preview[preview] or preview
+  ---@cast preview snacks.picker.preview
+  self.preview = preview
   return self
 end
 
@@ -83,13 +83,12 @@ function M:update(main)
 end
 
 ---@param picker snacks.Picker
-function M:preview(picker)
-  local item = picker:current()
-  local prev = self.item
+function M:show(picker)
+  local item, prev = picker:current(), self.item
   self.item = item
   if item then
     local buf = self.win.buf
-    self.previewer(setmetatable({
+    self.preview(setmetatable({
       preview = self,
       item = item,
       prev = prev,

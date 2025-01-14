@@ -1,9 +1,9 @@
----@class snacks.picker.format
----@field [string] snacks.picker.Formatter
+---@class snacks.picker.formatters
+---@field [string] snacks.picker.format
 local M = {}
 
 function M.severity(item, picker)
-  local ret = {} ---@type snacks.picker.Highlights
+  local ret = {} ---@type snacks.picker.Highlight[]
   local severity = item.severity
   severity = type(severity) == "number" and vim.diagnostic.severity[severity] or severity
   if not severity or type(severity) == "number" then
@@ -20,7 +20,7 @@ end
 
 ---@param item snacks.picker.Item
 function M.filename(item)
-  ---@type snacks.picker.Highlights
+  ---@type snacks.picker.Highlight[]
   local ret = {}
   if not item.file then
     return ret
@@ -58,7 +58,7 @@ function M.filename(item)
 end
 
 function M.file(item, picker)
-  ---@type snacks.picker.Highlights
+  ---@type snacks.picker.Highlight[]
   local ret = {}
 
   if item.severity then
@@ -86,7 +86,7 @@ end
 
 function M.git_log(item, picker)
   local a = Snacks.picker.util.align
-  local ret = {} ---@type snacks.picker.Highlights
+  local ret = {} ---@type snacks.picker.Highlight[]
   ret[#ret + 1] = { picker.opts.icons.git.commit, "SnacksPickerGitCommit" }
   ret[#ret + 1] = { item.commit, "SnacksPickerGitCommit" }
   ret[#ret + 1] = { " " }
@@ -122,7 +122,7 @@ function M.git_log(item, picker)
 end
 
 function M.lsp_symbol(item, picker)
-  local ret = {} ---@type snacks.picker.Highlights
+  local ret = {} ---@type snacks.picker.Highlight[]
   if item.hierarchy then
     local indents = picker.opts.icons.indent
     local indent = {} ---@type string[]
@@ -154,10 +154,10 @@ end
 
 ---@param kind? string
 ---@param count number
----@return snacks.picker.Formatter
+---@return snacks.picker.format
 function M.ui_select(kind, count)
   return function(item)
-    local ret = {} ---@type snacks.picker.Highlights
+    local ret = {} ---@type snacks.picker.Highlight[]
     local idx = tostring(item.idx)
     idx = (" "):rep(#tostring(count) - #idx) .. idx
     ret[#ret + 1] = { idx .. ".", "SnacksPickerIdx" }
@@ -180,7 +180,7 @@ function M.ui_select(kind, count)
 end
 
 function M.lines(item)
-  local ret = {} ---@type snacks.picker.Highlights
+  local ret = {} ---@type snacks.picker.Highlight[]
   local line_count = vim.api.nvim_buf_line_count(item.buf)
   local idx = Snacks.picker.util.align(tostring(item.idx), #tostring(line_count), { align = "right" })
   ret[#ret + 1] = { idx, "LineNr", virtual = true }
@@ -210,7 +210,7 @@ function M.text(item)
 end
 
 function M.diagnostic(item, picker)
-  local ret = {} ---@type snacks.picker.Highlights
+  local ret = {} ---@type snacks.picker.Highlight[]
   local diag = item.item ---@type vim.Diagnostic
   if item.severity then
     vim.list_extend(ret, M.severity(item, picker))
@@ -234,7 +234,7 @@ function M.diagnostic(item, picker)
 end
 
 function M.autocmd(item)
-  local ret = {} ---@type snacks.picker.Highlights
+  local ret = {} ---@type snacks.picker.Highlight[]
   ---@type vim.api.keyset.get_autocmds.ret
   local au = item.item
   local a = Snacks.picker.util.align
@@ -253,14 +253,14 @@ function M.autocmd(item)
 end
 
 function M.hl(item)
-  local ret = {} ---@type snacks.picker.Highlights
+  local ret = {} ---@type snacks.picker.Highlight[]
   ret[#ret + 1] = { item.hl_group, item.hl_group }
   return ret
 end
 
 function M.man(item)
   local a = Snacks.picker.util.align
-  local ret = {} ---@type snacks.picker.Highlights
+  local ret = {} ---@type snacks.picker.Highlight[]
   ret[#ret + 1] = { a(item.page, 20), "SnacksPickerManPage" }
   ret[#ret + 1] = { " " }
   ret[#ret + 1] = { ("(%s)"):format(item.section), "SnacksPickerManSection" }
@@ -271,7 +271,7 @@ end
 
 -- Pretty keymaps using which-key icons when available
 function M.keymap(item)
-  local ret = {} ---@type snacks.picker.Highlights
+  local ret = {} ---@type snacks.picker.Highlight[]
   ---@type vim.api.keyset.get_keymap
   local k = item.item
   local a = Snacks.picker.util.align
@@ -339,7 +339,7 @@ function M.keymap(item)
 end
 
 function M.git_status(item)
-  local ret = {} ---@type snacks.picker.Highlights
+  local ret = {} ---@type snacks.picker.Highlight[]
   local a = Snacks.picker.util.align
   local s = vim.trim(item.status):sub(1, 1)
   local hls = {
@@ -358,7 +358,7 @@ function M.git_status(item)
 end
 
 function M.register(item)
-  local ret = {} ---@type snacks.picker.Highlights
+  local ret = {} ---@type snacks.picker.Highlight[]
   ret[#ret + 1] = { " " }
   ret[#ret + 1] = { "[", "SnacksPickerDelim" }
   ret[#ret + 1] = { item.reg, "SnacksPickerRegister" }
@@ -369,7 +369,7 @@ function M.register(item)
 end
 
 function M.buffer(item)
-  local ret = {} ---@type snacks.picker.Highlights
+  local ret = {} ---@type snacks.picker.Highlight[]
   ret[#ret + 1] = { Snacks.picker.util.align(tostring(item.buf), 3), "SnacksPickerBufNr" }
   ret[#ret + 1] = { " " }
   ret[#ret + 1] = { Snacks.picker.util.align(item.flags, 2, { align = "right" }), "SnacksPickerBufFlags" }

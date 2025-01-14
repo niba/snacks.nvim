@@ -1,10 +1,10 @@
 ---@class snacks.picker
 ---@field actions snacks.picker.actions
 ---@field config snacks.picker.config
----@field format snacks.picker.format
+---@field format snacks.picker.formatters
+---@field preview snacks.picker.previewers
+---@field sort snacks.picker.sorters
 ---@field util snacks.picker.util
----@field sorter snacks.picker.sorter
----@field preview snacks.picker.preview
 ---@field current? snacks.Picker
 ---@field highlight snacks.picker.highlight
 ---@field resume fun(opts?: snacks.picker.Config):snacks.Picker
@@ -26,7 +26,7 @@ local M = setmetatable({}, {
       "format",
       "preview",
       "util",
-      "sorter",
+      "sort",
       highlight = "util.highlight",
       sources = "config.sources",
     }

@@ -1,4 +1,4 @@
----@class snacks.picker.preview
+---@class snacks.picker.previewers
 local M = {}
 
 local uv = vim.uv or vim.loop
@@ -68,7 +68,7 @@ function M.file(ctx)
       if stat.type == "directory" then
         return M.directory(ctx)
       end
-      local max_size = ctx.picker.opts.preview.file.max_size or (1024 * 1024)
+      local max_size = ctx.picker.opts.previewers.file.max_size or (1024 * 1024)
       if stat.size > max_size then
         ctx.preview:notify("large file > 1MB", "warn")
         return false
@@ -83,8 +83,8 @@ function M.file(ctx)
       local lines = {}
       for line in file:lines() do
         ---@cast line string
-        if #line > ctx.picker.opts.preview.file.max_line_length then
-          line = line:sub(1, ctx.picker.opts.preview.file.max_line_length) .. "..."
+        if #line > ctx.picker.opts.previewers.file.max_line_length then
+          line = line:sub(1, ctx.picker.opts.previewers.file.max_line_length) .. "..."
         end
         -- Check for binary data in the current line
         if line:find("[%z\1-\8\13\14\16-\31]") then
@@ -98,7 +98,7 @@ function M.file(ctx)
 
       vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, lines)
       vim.bo[ctx.buf].modifiable = false
-      ctx.preview:highlight({ file = path, ft = ctx.picker.opts.preview.file.ft, buf = ctx.buf })
+      ctx.preview:highlight({ file = path, ft = ctx.picker.opts.previewers.file.ft, buf = ctx.buf })
     end
   end
   ctx.preview:loc()
@@ -225,7 +225,7 @@ function M.man(ctx)
   M.cmd({ "man", ctx.item.section, ctx.item.page }, ctx, {
     ft = "man",
     env = {
-      MANPAGER = ctx.picker.opts.preview.man_pager or vim.fn.executable("col") == 1 and "col -bx" or "cat",
+      MANPAGER = ctx.picker.opts.previewers.man_pager or vim.fn.executable("col") == 1 and "col -bx" or "cat",
       MANWIDTH = tostring(ctx.preview.win:dim().width),
       MANPATH = vim.env.MANPATH,
     },

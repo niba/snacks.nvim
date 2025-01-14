@@ -1,5 +1,5 @@
 ---@class snacks.picker.layouts
----@field [string] snacks.picker.Layout
+---@field [string] snacks.picker.layout.Config
 local M = {}
 
 M.default = {

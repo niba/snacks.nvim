@@ -94,7 +94,7 @@ function M:update()
     self._statuscolumn = sc
     vim.wo[self.win.win].statuscolumn = sc
   end
-  local line = {} ---@type snacks.picker.Highlights
+  local line = {} ---@type snacks.picker.Highlight[]
   if self.picker:is_active() then
     line[#line + 1] = { M.spinner(), "SnacksPickerSpinner" }
     line[#line + 1] = { " " }
