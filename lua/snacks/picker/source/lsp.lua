@@ -48,6 +48,12 @@ local function wrap(client)
   -- old style
   return setmetatable({ wrapped = true }, {
     __index = function(_, k)
+      if k == "supports_method" then
+        -- supports_method doesn't support the bufnr argument
+        return function(_, method)
+          return client[k](method)
+        end
+      end
       if vim.tbl_contains(methods, k) then
         return function(_, ...)
           return client[k](...)
