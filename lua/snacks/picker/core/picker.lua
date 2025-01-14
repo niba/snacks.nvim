@@ -263,6 +263,9 @@ function M:show()
     self.preview.win:show()
   end
   self.input.win:focus()
+  if self.opts.on_show then
+    self.opts.on_show(self)
+  end
 end
 
 ---@return fun():snacks.picker.Item?
