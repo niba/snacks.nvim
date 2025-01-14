@@ -1,6 +1,6 @@
 local M = {}
 
----@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number}
+---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number}
 ---@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean}
 ---@alias snacks.picker.Highlight snacks.picker.Text|snacks.picker.Extmark
 ---@alias snacks.picker.format fun(item:snacks.picker.Item, picker:snacks.Picker):snacks.picker.Highlight[]

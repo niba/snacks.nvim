@@ -396,6 +396,7 @@ function M:_render(item, row)
   for _, extmark in ipairs(extmarks) do
     local col = extmark.col
     extmark.col = nil
+    extmark.row = nil
     vim.api.nvim_buf_set_extmark(self.win.buf, ns, row - 1, col, extmark)
   end
 end

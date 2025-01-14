@@ -167,8 +167,18 @@ function M.highlights()
       end
     end
     local code = {} ---@type string[]
+    local extmarks = {} ---@type snacks.picker.Extmark[]
+    local row = 1
     for _, def in ipairs(defs) do
+      for _, prop in ipairs({ "fg", "bg", "sp" }) do
+        local v = def.hl[prop]
+        if type(v) == "number" then
+          def.hl[prop] = ("#%06X"):format(v)
+        end
+      end
       code[#code + 1] = ("%s = %s"):format(def.group, vim.inspect(def.hl))
+      extmarks[#extmarks + 1] = { row = row, col = 0, hl_group = def.group, end_col = #def.group }
+      row = row + #vim.split(code[#code], "\n") + 1
     end
     items[#items + 1] = {
       text = vim.inspect(defs):gsub("\n", " "),
@@ -176,6 +186,7 @@ function M.highlights()
       preview = {
         text = table.concat(code, "\n\n"),
         ft = "lua",
+        extmarks = extmarks,
       },
     }
   end
