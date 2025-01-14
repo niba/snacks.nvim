@@ -207,7 +207,7 @@ M.grep_word = {
 M.help = {
   finder = "help",
   format = "text",
-  preview = {
+  previewers = {
     file = { ft = "help" },
   },
   win = {
