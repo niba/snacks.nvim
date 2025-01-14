@@ -5,6 +5,7 @@
 ---@field state table<string, any>
 ---@field main? number
 ---@field win_opts {main: snacks.win.Config, layout: snacks.win.Config, win: snacks.win.Config}
+---@field winhl string
 local M = {}
 M.__index = M
 
@@ -23,6 +24,7 @@ local ns_loc = vim.api.nvim_create_namespace("snacks.picker.preview.loc")
 ---@param main? number
 function M.new(opts, main)
   local self = setmetatable({}, M)
+  self.winhl = Snacks.picker.highlight.winhl("SnacksPickerPreview")
   local win_opts = Snacks.win.resolve(
     {
       title_pos = "center",
@@ -39,22 +41,19 @@ function M.new(opts, main)
         self.item = nil
         self:reset()
       end,
+      wo = {
+        winhighlight = self.winhl,
+      },
     }
   )
   self.win_opts = {
     main = {
       relative = "win",
       backdrop = false,
-      wo = {
-        winhighlight = "NormalFloat:Normal",
-      },
     },
     layout = {
       backdrop = win_opts.backdrop == true,
       relative = "win",
-      wo = {
-        winhighlight = Snacks.picker.highlight.winhl("SnacksPickerPreview"),
-      },
     },
   }
   self.win = Snacks.win(win_opts)
@@ -77,6 +76,7 @@ function M:update(main)
   self.main = main
   self.win_opts.main.win = main
   self.win.opts = vim.tbl_deep_extend("force", self.win.opts, main and self.win_opts.main or self.win_opts.layout)
+  self.win.opts.wo.winhighlight = main and vim.wo[main].winhighlight or self.winhl
   if main then
     self.win:update()
   end
