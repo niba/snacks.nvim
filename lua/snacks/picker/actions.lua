@@ -149,7 +149,9 @@ end
 function M.cmd(picker, item)
   picker:close()
   if item and item.cmd then
-    vim.cmd(item.cmd)
+    vim.schedule(function()
+      vim.cmd(item.cmd)
+    end)
   end
 end
 
