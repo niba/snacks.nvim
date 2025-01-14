@@ -98,6 +98,7 @@ function M.loclist(picker)
   local sel = picker:selected()
   local items = #sel > 0 and sel or picker.finder.items
   setqflist(items, { win = picker.parent_win })
+  setqflist(items, { win = picker.main })
 end
 
 function M.copy(_, item)
@@ -284,20 +285,17 @@ end
 
 function M.list_scroll_top(picker)
   local cursor = picker.list.cursor
-  picker.list:scroll(picker.list.cursor, true)
-  picker.list:move(cursor, true)
+  picker.list:view(cursor, cursor)
 end
 
 function M.list_scroll_bottom(picker)
   local cursor = picker.list.cursor
-  picker.list:scroll(picker.list.cursor - picker.list:height() + 1, true)
-  picker.list:move(cursor, true)
+  picker.list:view(cursor, picker.list.cursor - picker.list:height() + 1)
 end
 
 function M.list_scroll_center(picker)
   local cursor = picker.list.cursor
-  picker.list:scroll(picker.list.cursor - math.ceil(picker.list:height() / 2) + 1, true)
-  picker.list:move(cursor, true)
+  picker.list:view(cursor, picker.list.cursor - math.ceil(picker.list:height() / 2) + 1)
 end
 
 function M.list_scroll_down(picker)

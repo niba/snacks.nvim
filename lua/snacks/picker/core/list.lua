@@ -89,6 +89,15 @@ function M.new(picker)
   return self
 end
 
+---@param cursor number
+---@param topline? number
+function M:view(cursor, topline)
+  if topline then
+    self:scroll(topline, true, false)
+  end
+  self:move(cursor, true)
+end
+
 ---@param idx number
 function M:idx2row(idx)
   local ret = idx - self.top + 1
