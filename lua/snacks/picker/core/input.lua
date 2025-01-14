@@ -76,6 +76,9 @@ function M:statuscolumn()
   end
   local pattern = self.picker.opts.live and self.filter.pattern or self.filter.search
   if pattern ~= "" then
+    if #pattern > 20 then
+      pattern = Snacks.picker.util.truncate(pattern, 20)
+    end
     add(pattern, "SnacksPickerInputSearch")
   end
   add(self.picker.opts.prompt or " ", "SnacksPickerPrompt")

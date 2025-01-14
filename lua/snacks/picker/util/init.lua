@@ -30,17 +30,31 @@ end
 
 ---@param text string
 ---@param width number
----@param opts? {align?: "left" | "right", truncate?: boolean}
+---@param opts? {align?: "left" | "right" | "center", truncate?: boolean}
 function M.align(text, width, opts)
   opts = opts or {}
+  opts.align = opts.align or "left"
   local tw = vim.api.nvim_strwidth(text)
   if tw > width then
     return opts.truncate and (vim.fn.strcharpart(text, 0, width - 1) .. "…") or text
   end
-  if opts.align == "right" then
-    return (" "):rep(width - tw) .. text
+  local left = math.floor((width - tw) / 2)
+  local right = width - tw - left
+  if opts.align == "left" then
+    left, right = 0, width - tw
+  elseif opts.align == "right" then
+    left, right = width - tw, 0
   end
-  return text .. (" "):rep(width - tw)
+  return (" "):rep(left) .. text .. (" "):rep(right)
+end
+
+---@param text string
+---@param width number
+function M.truncate(text, width)
+  if vim.api.nvim_strwidth(text) > width then
+    return vim.fn.strcharpart(text, 0, width - 1) .. "…"
+  end
+  return text
 end
 
 -- Stops visual mode and returns the selected text
