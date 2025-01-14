@@ -314,6 +314,10 @@ function M:count()
   return self.finder:count()
 end
 
+function M:empty()
+  return self:count() == 0
+end
+
 --- Close the picker
 function M:close()
   if self.closed then
@@ -429,7 +433,11 @@ function M:find(opts)
   self.finder:run(self)
   self.matcher:run(self)
   if opts and opts.on_done then
-    self.matcher.task:on("done", vim.schedule_wrap(opts.on_done))
+    if self.matcher.task:running() then
+      self.matcher.task:on("done", vim.schedule_wrap(opts.on_done))
+    else
+      opts.on_done()
+    end
   end
   self:progress()
 end
