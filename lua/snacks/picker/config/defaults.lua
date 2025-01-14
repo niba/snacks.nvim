@@ -74,7 +74,7 @@ local M = {}
 ---@field sources? snacks.picker.sources.Config|{}
 ---@field icons? snacks.picker.icons
 ---@field source? string
----@field on_moved? fun(picker:snacks.Picker, item:snacks.picker.Item)
+---@field on_change? fun(picker:snacks.Picker, item:snacks.picker.Item) called when the cursor changes
 ---@field layouts? table<string, snacks.picker.Layout>
 local defaults = {
   prompt = " ",

@@ -425,7 +425,7 @@ M.picker_format = {
 M.picker_layouts = {
   finder = "meta_layouts",
   format = "text",
-  on_moved = function(picker, item)
+  on_change = function(picker, item)
     vim.schedule(function()
       picker:set_layout(item.text)
     end)

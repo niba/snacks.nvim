@@ -244,8 +244,8 @@ function M:debug(name, start)
 end
 
 function M:show_preview()
-  if self.opts.on_moved then
-    self.opts.on_moved(self, self:current())
+  if self.opts.on_change then
+    self.opts.on_change(self, self:current())
   end
   if not self.preview.win:valid() then
     return
