@@ -41,6 +41,16 @@ local query = vim.treesitter.query.parse(
       (expression_list
         value: (table_constructor) @example_config)
     ) @example
+
+    ;; props
+    (assignment_statement
+      (variable_list
+        name: (dot_index_expression
+          field: (identifier) @prop_name) 
+          @_pn (#lua-match? @_pn "^M%."))
+      (expression_list
+        value: (_) @prop_value)
+    ) @prop
   ]]
 )
 
@@ -73,6 +83,7 @@ local query = vim.treesitter.query.parse(
 ---@field setup? string
 ---@field examples table<string, string>
 ---@field styles {name:string, opts:string, comment?:string}[]
+---@field props table<string, string>
 
 ---@param lines string[]
 function M.parse(lines)
@@ -94,6 +105,7 @@ function M.parse(lines)
   ---@type snacks.docs.Parse
   local ret = { captures = {}, comments = {} }
 
+  local used_comments = {} ---@type table<number, boolean>
   for id, node in query:iter_captures(parser:trees()[1]:root(), source) do
     local name = query.captures[id]
     if not name:find("_") then
@@ -101,7 +113,7 @@ function M.parse(lines)
       local fields = {}
       for id2, node2 in query:iter_captures(node, source) do
         local c = query.captures[id2]
-        if c:find(".+_") then
+        if c:find(name .. "_") then
           fields[c:gsub("^.*_", "")] = vim.treesitter.get_node_text(node2, source)
         end
       end
@@ -110,7 +122,7 @@ function M.parse(lines)
       local comment = "" ---@type string
       if comments[node:start()] then
         comment = comments[node:start()]
-        comments[node:start()] = nil
+        used_comments[node:start()] = true
       end
 
       table.insert(ret.captures, {
@@ -122,6 +134,9 @@ function M.parse(lines)
         fields = fields,
       })
     end
+  end
+  for l in pairs(used_comments) do
+    comments[l] = nil
   end
 
   -- remove comments that are followed by code
@@ -152,6 +167,7 @@ function M.extract(lines, opts)
     end, parse.comments),
     styles = {},
     examples = {},
+    props = {},
   }
 
   for _, c in ipairs(parse.captures) do
@@ -168,6 +184,10 @@ function M.extract(lines, opts)
       elseif c.fields.name == "M" then
         ret.mod = c.comment
       end
+    elseif c.name == "prop" then
+      local name = c.fields.name:sub(1)
+      local value = c.fields.value
+      ret.props[name] = c.comment == "" and value or c.comment .. "\n" .. value
     elseif c.name == "fun" then
       local name = c.fields.name:sub(2)
       local args = (c.fields.params or ""):sub(2, -2)
@@ -229,6 +249,7 @@ end
 ---@param opts? {extract_comment: boolean} -- default true
 function M.md(str, opts)
   str = str or ""
+  str = str:gsub("\r", "")
   opts = opts or {}
   if opts.extract_comment == nil then
     opts.extract_comment = true
@@ -418,7 +439,33 @@ function M.write(name, lines)
   table.insert(top, "")
   vim.list_extend(top, lines)
 
-  vim.fn.writefile(top, path)
+  vim.fn.writefile(vim.split(table.concat(top, "\n"), "\n"), path)
+end
+
+---@param ret string[]
+function M.picker(ret)
+  local lines = vim.fn.readfile("lua/snacks/picker/config/sources.lua")
+  local info = M.extract(lines, { prefix = "Snacks.picker", name = "sources" })
+  local sources = vim.tbl_keys(info.props)
+  table.sort(sources)
+  table.insert(ret, "## 🔍 Sources\n")
+  for _, source in ipairs(sources) do
+    local opts = info.props[source]
+    table.insert(ret, ("### `%s`"):format(source))
+    table.insert(ret, "")
+    table.insert(ret, M.md(opts))
+  end
+  lines = vim.fn.readfile("lua/snacks/picker/config/layouts.lua")
+  info = M.extract(lines, { prefix = "Snacks.picker", name = "layouts" })
+  sources = vim.tbl_keys(info.props)
+  table.sort(sources)
+  table.insert(ret, "## 🖼️ Layouts\n")
+  for _, source in ipairs(sources) do
+    local opts = info.props[source]
+    table.insert(ret, ("### `%s`"):format(source))
+    table.insert(ret, "")
+    table.insert(ret, M.md(opts))
+  end
 end
 
 function M._build()
@@ -436,6 +483,7 @@ function M._build()
     examples = {},
     styles = {},
     setup = "---@type table<string, snacks.win.Config>\n    styles",
+    props = {},
   }
 
   for _, plugin in pairs(plugins) do
@@ -471,7 +519,11 @@ function M._build()
       info.config = name ~= "init" and info.config or nil
       plugin.meta.config = info.config ~= nil
 
-      local rendered = M.render(name, info)
+      local rendered = {} ---@type string[]
+      vim.list_extend(rendered, M.render(name, info))
+      if name == "picker" then
+        M.picker(rendered)
+      end
 
       for _, child in ipairs(children) do
         table.insert(rendered, "")
