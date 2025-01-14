@@ -82,6 +82,9 @@ function M.new(picker)
       self:update()
     end
   end)
+  self.win:on({ "WinEnter", "WinLeave" }, function()
+    self:update_cursorline()
+  end)
 
   return self
 end
@@ -388,6 +391,12 @@ function M:_render(item, row)
   end
 end
 
+function M:update_cursorline()
+  if self.win.win and vim.api.nvim_win_is_valid(self.win.win) then
+    vim.wo[self.win.win].cursorline = self:count() > 0
+  end
+end
+
 function M:render()
   self:move(0, false, false)
 
@@ -416,7 +425,7 @@ function M:render()
   end
 
   -- Fix cursor and cursorline
-  vim.wo[self.win.win].cursorline = self:count() > 0
+  self:update_cursorline()
   local cursor = vim.api.nvim_win_get_cursor(self.win.win)
   if cursor[1] ~= self:idx2row(self.cursor) then
     vim.api.nvim_win_set_cursor(self.win.win, { self:idx2row(self.cursor), 0 })
