@@ -79,8 +79,8 @@ function M.resolve(action, picker, name)
   } or action
   ---@cast action snacks.picker.Action
   return {
-    action = function(_, item)
-      return action.action(picker, item)
+    action = function()
+      return action.action(picker, picker:current())
     end,
     desc = action.desc,
   }
