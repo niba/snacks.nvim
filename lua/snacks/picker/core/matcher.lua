@@ -11,6 +11,8 @@ local Async = require("snacks.picker.util.async")
 ---@field live? boolean
 local M = {}
 M.__index = M
+M.DEFAULT_SCORE = 1000
+M.INVERSE_SCORE = 1000
 
 local YIELD_MATCH = 5 -- ms
 local clear = require("table.clear")
@@ -79,6 +81,14 @@ function M:run(picker, opts)
   if self.task:running() then
     return
   end
+
+  -- PERF: fast path for empty pattern
+  if self:empty() then
+    picker.list.items = picker.finder.items
+    picker:update()
+    return
+  end
+
   ---@async
   self.task = Async.new(function()
     local yield = Async.yielder(YIELD_MATCH)
@@ -230,7 +240,7 @@ end
 function M:match(item, opts)
   opts = opts or {}
   if self:empty() or (self.live and not opts.force) then
-    return 1000 -- empty pattern matches everything
+    return M.DEFAULT_SCORE -- empty pattern matches everything
   end
   local score = 0
   local positions = opts.positions and {} or nil ---@type number[]?
@@ -288,7 +298,7 @@ function M:_match(item, mods, positions)
   if mods.field then
     if item[mods.field] == nil then
       if mods.inverse then
-        return 1000
+        return M.INVERSE_SCORE
       end
       return
     end
@@ -323,7 +333,7 @@ function M:_match(item, mods, positions)
   end
   if mods.inverse then
     if not from then
-      return 1000
+      return M.INVERSE_SCORE
     end
     return
   end

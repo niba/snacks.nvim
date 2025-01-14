@@ -41,22 +41,27 @@ end
 
 ---@param picker snacks.Picker
 function M:run(picker)
+  local score = require("snacks.picker.core.matcher").DEFAULT_SCORE
   self.task:abort()
   self.items = {}
   local yield ---@type fun()
-  collectgarbage("stop") -- moar speed
   self.filter = picker.input.filter:clone({ trim = true })
   local finder = self._find(picker.opts, self.filter)
   local limit = picker.opts.limit or math.huge
+
+  -- PERF: if finder is a table, we can skip the async part
   if type(finder) == "table" then
     local items = finder --[[@as snacks.picker.finder.Item[] ]]
-    finder = function(cb)
-      for _, item in ipairs(items) do
-        cb(item)
-      end
+    for i, item in ipairs(items) do
+      item.idx, item.score = i, score
+      self.items[i] = item
     end
+    return
   end
+
+  collectgarbage("stop") -- moar speed
   ---@cast finder fun(cb:async fun(item:snacks.picker.finder.Item))
+  ---@diagnostic disable-next-line: await-in-sync
   self.task = Async.new(function()
     ---@async
     finder(function(item)
@@ -67,7 +72,7 @@ function M:run(picker)
         end
         return
       end
-      item.idx = #self.items + 1
+      item.idx, item.score = #self.items + 1, score
       self.items[item.idx] = item
       picker.matcher.task:resume()
       yield = yield or Async.yielder(YIELD_FIND)

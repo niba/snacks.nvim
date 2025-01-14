@@ -349,6 +349,7 @@ function M:update()
   end
 
   local count = self.finder:count()
+  local list_count = self.list:count()
   -- Check if we should show the picker
   if not self.shown then
     -- Always show live pickers
@@ -376,7 +377,7 @@ function M:update()
         self:show()
         self:debug("show")
       end
-    elseif count > 1 or (count == 1 and not self.opts.auto_confirm) then -- show the picker if we have results
+    elseif list_count > 1 or (list_count == 1 and not self.opts.auto_confirm) then -- show the picker if we have results
       self:show()
       self:debug("show")
     end

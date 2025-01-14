@@ -72,6 +72,10 @@ end
 ---@param event snacks.picker.AsyncEvent
 ---@param cb async fun(res:any, async:snacks.picker.Async)
 function Async:on(event, cb)
+  if event == "done" and not self:running() then
+    cb(nil, self)
+    return self
+  end
   self._on[event] = self._on[event] or {}
   table.insert(self._on[event], cb)
   return self
