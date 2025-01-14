@@ -32,6 +32,12 @@ function M.directory(ctx)
 end
 
 ---@param ctx snacks.picker.preview.ctx
+function M.none(ctx)
+  ctx.preview:reset()
+  ctx.preview:notify("no preview available", "warn")
+end
+
+---@param ctx snacks.picker.preview.ctx
 function M.preview(ctx)
   if ctx.item.preview == "file" then
     return M.file(ctx)
@@ -52,7 +58,11 @@ function M.file(ctx)
     ctx.preview:set_title(name)
     vim.api.nvim_win_set_buf(ctx.win, ctx.item.buf)
   else
-    local path = assert(Snacks.picker.util.path(ctx.item), "item.file is required: " .. vim.inspect(ctx.item))
+    local path = Snacks.picker.util.path(ctx.item)
+    if not path then
+      ctx.preview:notify("Item has no `file`", "error")
+      return
+    end
     -- re-use existing preview when path is the same
     if path ~= Snacks.picker.util.path(ctx.prev) then
       ctx.preview:reset()

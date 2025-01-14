@@ -57,6 +57,7 @@ M.command_history = {
   finder = "vim_history",
   name = "cmd",
   format = "text",
+  preview = "none",
   layout = {
     preset = "vscode",
   },
@@ -486,6 +487,7 @@ M.search_history = {
   finder = "vim_history",
   name = "search",
   format = "text",
+  preview = "none",
   layout = {
     preset = "vscode",
   },
