@@ -136,6 +136,7 @@ local defaults = {
     input = {
       keys = {
         ["<Esc>"] = "close",
+        ["<CR>"] = "confirm",
         ["G"] = "list_bottom",
         ["gg"] = "list_top",
         ["j"] = "list_down",
