@@ -13,7 +13,7 @@ Async.BUDGET = 20
 ---@field resolved_layout snacks.picker.Layout
 ---@field list snacks.picker.list
 ---@field matcher snacks.picker.Matcher
----@field parent_win number
+---@field main number
 ---@field preview snacks.picker.Preview
 ---@field shown? boolean
 ---@field sorter snacks.matcher.sorter
@@ -56,7 +56,7 @@ function M.new(opts)
   self.visual = Snacks.picker.util.visual()
   self.start_time = uv.hrtime()
   Snacks.picker.current = self
-  self.parent_win = vim.api.nvim_get_current_win()
+  self.main = require("snacks.picker.core.main").get(self.opts.main)
   local actions = require("snacks.picker.core.actions").get(self)
   self.opts.win.input.actions = actions
   self.opts.win.list.actions = actions
@@ -85,8 +85,7 @@ function M.new(opts)
   local layout = Snacks.picker.config.layout(self.opts)
   self.list = require("snacks.picker.core.list").new(self)
   self.input = require("snacks.picker.core.input").new(self)
-  self.preview =
-    require("snacks.picker.core.preview").new(self.opts, layout.preview == "main" and self.parent_win or nil)
+  self.preview = require("snacks.picker.core.preview").new(self.opts, layout.preview == "main" and self.main or nil)
 
   M.last = {
     opts = self.opts,
@@ -159,7 +158,7 @@ function M:init_layout(layout)
       backdrop = backdrop,
     },
   }))
-  self.preview:update(preview_main and self.parent_win or nil)
+  self.preview:update(preview_main and self.main or nil)
   -- apply box highlight groups
   local boxwhl = Snacks.picker.highlight.winhl("SnacksPickerBox")
   for _, win in pairs(self.layout.box_wins) do
@@ -306,8 +305,9 @@ function M:close()
   self.closed = true
   Snacks.picker.current = nil
   local current = vim.api.nvim_get_current_win()
-  if (current == self.input.win.win or current == self.list.win.win) and vim.api.nvim_win_is_valid(self.parent_win) then
-    vim.api.nvim_set_current_win(self.parent_win)
+  local is_picker_win = vim.tbl_contains({ self.input.win.win, self.list.win.win, self.preview.win.win }, current)
+  if is_picker_win and vim.api.nvim_win_is_valid(self.main) then
+    vim.api.nvim_set_current_win(self.main)
   end
   self.preview.win:close()
   self.layout:close()

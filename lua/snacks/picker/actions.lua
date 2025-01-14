@@ -97,7 +97,6 @@ function M.loclist(picker)
   picker:close()
   local sel = picker:selected()
   local items = #sel > 0 and sel or picker.finder.items
-  setqflist(items, { win = picker.parent_win })
   setqflist(items, { win = picker.main })
 end
 

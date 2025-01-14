@@ -266,6 +266,8 @@ M.lines = {
     preview = "main",
     preset = "ivy",
   },
+  -- allow any window to be used as the main window
+  main = { current = true },
   ---@param picker snacks.Picker
   on_show = function(picker)
     local cursor = vim.api.nvim_win_get_cursor(picker.main)
