@@ -10,7 +10,7 @@ M.__index = M
 
 ---@alias snacks.picker.finder fun(opts:snacks.picker.Config, filter:snacks.picker.Filter): (snacks.picker.finder.Item[] | fun(cb:async fun(item:snacks.picker.finder.Item)))
 
-local YIELD_FIND = 5 -- ms
+local YIELD_FIND = 1 -- ms
 
 ---@param find snacks.picker.finder
 function M.new(find)

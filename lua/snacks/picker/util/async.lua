@@ -278,13 +278,15 @@ function M.yielder(ms)
   if not coroutine.running() then
     return function() end
   end
-  ms = ms or 5
-  local start = uv.hrtime()
+  local ns, count, start = (ms or 5) * 1e6, 0, uv.hrtime()
   ---@async
   return function()
-    if uv.hrtime() - start > ms * 1e6 then
-      M.yield()
-      start = uv.hrtime()
+    count = count + 1
+    if count % 100 == 0 then
+      if uv.hrtime() - start > ns then
+        M.yield()
+        start = uv.hrtime()
+      end
     end
   end
 end

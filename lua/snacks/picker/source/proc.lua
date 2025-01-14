@@ -4,6 +4,7 @@ local Buffer = require("string.buffer")
 local M = {}
 
 local uv = vim.uv or vim.loop
+M.USE_QUEUE = true
 
 ---@class snacks.picker.proc.Config: snacks.picker.Config
 ---@field cmd string
@@ -89,13 +90,24 @@ function M.proc(opts)
       end
     end
 
+    local queue = require("snacks.picker.util.queue").new()
+
     stdout:read_start(function(err, data)
       assert(not err, err)
-      process(data)
+      if M.USE_QUEUE then
+        queue:push(data)
+        self:resume()
+      else
+        process(data)
+      end
     end)
 
-    while not handle:is_closing() do
-      self:suspend()
+    while not (handle:is_closing() and queue:empty()) do
+      if queue:empty() then
+        self:suspend()
+      else
+        process(queue:pop())
+      end
     end
   end
 end

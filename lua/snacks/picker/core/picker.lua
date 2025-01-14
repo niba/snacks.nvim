@@ -2,7 +2,7 @@ local Async = require("snacks.picker.util.async")
 local Finder = require("snacks.picker.core.finder")
 
 local uv = vim.uv or vim.loop
-Async.BUDGET = 20
+Async.BUDGET = 10
 
 ---@class snacks.Picker
 ---@field opts snacks.picker.Config
