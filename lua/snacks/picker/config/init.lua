@@ -11,13 +11,22 @@ function M.get(opts)
   defaults.sources = sources
   local user = Snacks.config.picker or {}
 
-  local global = Snacks.config.get("picker", defaults) -- defaults + global user config
+  local global = Snacks.config.get("picker", defaults, opts) -- defaults + global user config
+  ---@type snacks.picker.Config[]
   local todo = {
     defaults,
     user,
     opts.source and global.sources[opts.source] or {},
     opts,
   }
+
+  for _, t in ipairs(todo) do
+    if t.confirm then
+      t.actions = t.actions or {}
+      t.actions.confirm = t.confirm
+    end
+  end
+
   local ret = vim.tbl_deep_extend("force", unpack(todo))
   ret.layouts = ret.layouts or {}
   local layouts = require("snacks.picker.config.layouts")
@@ -35,6 +44,8 @@ function M.layout(opts)
   end
   local layouts = require("snacks.picker.config.layouts")
   local layout = M.resolve(opts.layout or {}, opts.source)
+  layout = type(layout) == "string" and { preset = layout } or layout
+  ---@cast layout snacks.picker.layout.Config
   if layout.layout then
     return layout
   end

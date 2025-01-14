@@ -69,7 +69,7 @@ local M = {}
 ---@field sort? snacks.picker.sort|snacks.picker.sort.Config sort function or config
 --- UI
 ---@field win? snacks.picker.win.Config
----@field layout? snacks.picker.layout.Config|{}|fun(source:string):snacks.picker.layout.Config
+---@field layout? snacks.picker.layout.Config|string|{}|fun(source:string):(snacks.picker.layout.Config|string)
 ---@field icons? snacks.picker.icons
 ---@field prompt? string prompt text / icon
 --- Preset options
