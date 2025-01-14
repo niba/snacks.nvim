@@ -232,7 +232,6 @@ function M.results_to_items(client, results, opts)
   end
 
   local last = {} ---@type table<snacks.picker.finder.Item, snacks.picker.finder.Item>
-
   ---@param result lsp.ResultItem
   ---@param parent snacks.picker.finder.Item
   local function add(result, parent)
@@ -243,6 +242,7 @@ function M.results_to_items(client, results, opts)
     if sym then
       item = {
         kind = M.symbol_kind(result.kind),
+        parent = parent,
         depth = (parent.depth or 0) + 1,
         detail = result.detail,
         name = result.name,
@@ -252,8 +252,8 @@ function M.results_to_items(client, results, opts)
         pos = { sym.lnum, sym.col },
         end_pos = sym.end_lnum and sym.end_col and { sym.end_lnum, sym.end_col },
       }
-      last[parent] = item
       items[#items + 1] = item
+      last[parent] = item
       parent = item
     end
     for _, child in ipairs(result.children or {}) do
@@ -262,12 +262,11 @@ function M.results_to_items(client, results, opts)
     result.children = nil
   end
 
+  local root = { depth = 0, text = "" } ---@type snacks.picker.finder.Item
   ---@type snacks.picker.finder.Item
-  local root = { depth = 0, text = "" }
   for _, result in ipairs(results) do
     add(result, root)
   end
-
   for _, item in pairs(last) do
     item.last = true
   end

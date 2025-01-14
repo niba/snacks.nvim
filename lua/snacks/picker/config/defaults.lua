@@ -189,7 +189,7 @@ local defaults = {
     -- stylua: ignore
   icons = {
     indent = {
-      top    = "│ ",
+      vertical    = "│ ",
       middle = "├╴",
       last   = "└╴",
     },

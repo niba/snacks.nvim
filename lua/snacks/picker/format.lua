@@ -125,11 +125,17 @@ function M.lsp_symbol(item, picker)
   local ret = {} ---@type snacks.picker.Highlights
   if item.hierarchy then
     local indents = picker.opts.icons.indent
-    local indent = {}
-    if item.depth == 1 then
-      indent = { item.last and indents.last or indents.middle }
-    else
-      indent = { indents.top, string.rep(" ", item.depth * 2 - 4), item.last and indents.last or indents.middle }
+    local indent = {} ---@type string[]
+    local node = item
+    while node and node.depth > 0 do
+      local is_last, icon = node.last, ""
+      if node ~= item then
+        icon = is_last and "  " or indents.vertical
+      else
+        icon = is_last and indents.last or indents.middle
+      end
+      table.insert(indent, 1, icon)
+      node = node.parent
     end
     ret[#ret + 1] = { table.concat(indent), "SnacksPickerIndent" }
   end
