@@ -5,6 +5,7 @@
 ---@field box_wins snacks.win[]
 ---@field win_opts table<string, snacks.win.Config>
 ---@field closed? boolean
+---@field screenpos number[]?
 local M = {}
 M.__index = M
 
@@ -111,6 +112,17 @@ function M.new(opts)
     end
   end)
 
+  self.root:on("WinResized", function(_, ev)
+    if self.closed then
+      return true
+    end
+    local sp = vim.fn.screenpos(self.root.win, 1, 1)
+    if not vim.deep_equal(sp, self.screenpos) then
+      self.screenpos = sp
+      self:update()
+    end
+  end)
+
   -- update layout on VimResized
   self.root:on("VimResized", function()
     self:update()
@@ -183,6 +195,7 @@ function M:update()
   end
   if not self.root:valid() then
     self.root:show()
+    self.screenpos = vim.fn.screenpos(self.root.win, 1, 1)
   end
 
   -- Calculate offsets for vertical splits
