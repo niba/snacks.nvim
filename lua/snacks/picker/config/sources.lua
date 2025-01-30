@@ -37,6 +37,38 @@ M.buffers = {
   },
 }
 
+---@class snacks.picker.explorer.Config: snacks.picker.files.Config
+---@field follow_file? boolean follow the file from the current buffer
+---@field tree? boolean show the file tree (default: true)
+M.explorer = {
+  finder = "explorer",
+  sort = { fields = { "sort" } },
+  tree = true,
+  follow_file = true,
+  focus = "list",
+  auto_close = false,
+  layout = { preset = "sidebar", preview = false },
+  formatters = { file = { filename_only = true } },
+  matcher = { sort_empty = true },
+  config = function(opts)
+    return require("snacks.picker.source.explorer").setup(opts)
+  end,
+  win = {
+    list = {
+      keys = {
+        ["<BS>"] = "explorer_up",
+        ["a"] = "explorer_add",
+        ["d"] = "explorer_del",
+        ["r"] = "explorer_rename",
+        ["c"] = "explorer_copy",
+        ["y"] = "explorer_yank",
+        ["<c-c>"] = "explorer_cd",
+        ["."] = "explorer_focus",
+      },
+    },
+  },
+}
+
 M.cliphist = {
   finder = "system_cliphist",
   format = "text",
@@ -115,7 +147,7 @@ M.diagnostics_buffer = {
 }
 
 ---@class snacks.picker.files.Config: snacks.picker.proc.Config
----@field cmd? string
+---@field cmd? "fd"| "rg"| "find" command to use. Leave empty to auto-detect
 ---@field hidden? boolean show hidden files
 ---@field ignored? boolean show ignored files
 ---@field dirs? string[] directories to search
