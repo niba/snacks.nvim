@@ -43,26 +43,33 @@ function M.filename(item, picker)
 
   if picker.opts.icons.files.enabled ~= false then
     local icon, hl = Snacks.util.icon(name, cat)
+    if item.dir and item.open then
+      icon = " "
+    end
     local padded_icon = icon:sub(-1) == " " and icon or icon .. " "
     ret[#ret + 1] = { padded_icon, hl, virtual = true }
   end
 
-  local dir, file = path:match("^(.*)/(.+)$")
+  local base_hl = item.dir and "SnacksPickerDirectory" or "SnacksPickerFile"
+  local dir_hl = "SnacksPickerDir"
+
   if picker.opts.formatters.file.filename_only then
-    dir = nil
     path = vim.fn.fnamemodify(path, ":t")
-  end
-  if file and dir then
-    if picker.opts.formatters.file.filename_first then
-      ret[#ret + 1] = { file, "SnacksPickerFile", field = "file" }
-      ret[#ret + 1] = { " " }
-      ret[#ret + 1] = { dir, "SnacksPickerDir", field = "file" }
-    else
-      ret[#ret + 1] = { dir .. "/", "SnacksPickerDir", field = "file" }
-      ret[#ret + 1] = { file, "SnacksPickerFile", field = "file" }
-    end
+    ret[#ret + 1] = { path, base_hl, field = "file" }
   else
-    ret[#ret + 1] = { path, "SnacksPickerFile", field = "file" }
+    local dir, base = path:match("^(.*)/(.+)$")
+    if base and dir then
+      if picker.opts.formatters.file.filename_first then
+        ret[#ret + 1] = { base, base_hl, field = "file" }
+        ret[#ret + 1] = { " " }
+        ret[#ret + 1] = { dir, dir_hl, field = "file" }
+      else
+        ret[#ret + 1] = { dir .. "/", dir_hl, field = "file" }
+        ret[#ret + 1] = { base, base_hl, field = "file" }
+      end
+    else
+      ret[#ret + 1] = { path, base_hl, field = "file" }
+    end
   end
   if item.pos and item.pos[1] > 0 then
     ret[#ret + 1] = { ":", "SnacksPickerDelim" }

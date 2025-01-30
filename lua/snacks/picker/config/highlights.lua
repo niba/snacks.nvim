@@ -9,12 +9,13 @@ Snacks.util.set_hl({
   Special = "Special",
   Label = "SnacksPickerSpecial",
   Totals = "NonText",
-  File = "",
+  File = "", -- basename of a file path
+  Directory = "Directory", -- basename of a directory path
+  Dir = "NonText", -- dirname of a path
   Flag = "DiagnosticVirtualTextInfo",
   FlagHidden = "SnacksPickerFlag",
   FlagIgnored = "SnacksPickerFlag",
   FlagFollow = "SnacksPickerFlag",
-  Dir = "NonText",
   Dimmed = "Conceal",
   Row = "String",
   Col = "LineNr",
