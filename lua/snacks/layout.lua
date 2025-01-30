@@ -5,6 +5,7 @@
 ---@field box_wins snacks.win[]
 ---@field win_opts table<string, snacks.win.Config>
 ---@field closed? boolean
+---@field split? boolean
 ---@field screenpos number[]?
 local M = {}
 M.__index = M
@@ -50,6 +51,7 @@ function M.new(opts)
   -- wrap the split layout in a vertical box
   -- this is needed since a simple split window can't have borders/titles
   if self.opts.layout.position and self.opts.layout.position ~= "float" then
+    self.split = true
     local inner = self.opts.layout
     self.opts.layout = {
       zindex = inner.zindex or 30,
@@ -210,20 +212,23 @@ function M:update()
   end
 
   -- Calculate offsets for vertical splits
-  local voffset = 0
+  local top, bottom = 0, 0
   local pos = self.opts.layout.position
-  if pos and (pos == "left" or pos == "right") then
-    voffset = (vim.o.cmdheight + (vim.o.laststatus == 3 and 1 or 0)) or 0
-    voffset = voffset
-      + (((vim.o.showtabline == 2 or (vim.o.showtabline == 1 and #vim.api.nvim_list_tabpages() > 1)) and 1 or 0) or 0)
+  if pos and (pos == "left" or pos == "right") or self.opts.fullscreen then
+    bottom = (vim.o.cmdheight + (vim.o.laststatus == 3 and 1 or 0)) or 0
+    top = (vim.o.showtabline == 2 or (vim.o.showtabline == 1 and #vim.api.nvim_list_tabpages() > 1)) and 1 or 0
   end
   self:update_box(layout, {
     col = 0,
-    row = 0,
+    row = self.opts.fullscreen and self.split and top or 0, -- only needed for fullscreen splits
     width = vim.o.columns,
-    height = vim.o.lines - voffset,
+    height = vim.o.lines - top - bottom,
   })
 
+  -- fix fullscreen float layouts
+  if self.opts.fullscreen and not self.split then
+    self.root.opts.row = self.root.opts.row + top
+  end
   for _, win in pairs(self:get_wins()) do
     if win:valid() then
       -- update windows with eventignore=all
@@ -405,6 +410,11 @@ function M:update_win(win, parent)
       zindex = self.root.opts.zindex + win.depth,
     }
   )
+  -- fix fullscreen for splits
+  if self.opts.fullscreen and self.split then
+    w.opts.relative = "editor"
+    w.opts.win = nil
+  end
   -- adjust max width / height
   w.opts.max_width = math.min(parent.width, w.opts.max_width or parent.width)
   w.opts.max_height = math.min(parent.height, w.opts.max_height or parent.height)
