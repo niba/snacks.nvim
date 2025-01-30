@@ -204,10 +204,7 @@ end
 
 function M:is_focused()
   local current = vim.api.nvim_get_current_win()
-  return vim.tbl_contains(
-    { self.input.win.win, self.list.win.win, self.preview.win.win, self.layout.root.win },
-    current
-  )
+  return vim.tbl_contains({ self.input.win.win, self.list.win.win, self.preview.win.win }, current)
 end
 
 --- Execute the callback in normal mode.
@@ -261,8 +258,30 @@ function M:init_layout(layout)
     },
   }))
 
+  local left_picker = true -- left a picker window
+  self.layout.root:on("WinLeave", function()
+    left_picker = self:is_focused()
+  end)
+
+  local last_win = self.input.filter.current_win
+  local last_pwin ---@type number?
   self.layout.root:on("WinEnter", function()
-    self:action("focus_input")
+    local win = vim.api.nvim_get_current_win()
+    if self:is_focused() then
+      last_pwin = win
+    elseif win ~= self.layout.root.win then
+      last_win = win
+    end
+  end)
+
+  self.layout.root:on("WinEnter", function()
+    if left_picker and last_win and vim.api.nvim_win_is_valid(last_win) then
+      vim.api.nvim_set_current_win(last_win)
+    elseif last_pwin and vim.api.nvim_win_is_valid(last_pwin) then
+      vim.api.nvim_set_current_win(last_pwin)
+    else
+      self.input.win:focus()
+    end
   end, { buf = true })
 
   self.preview:update(preview_main and self.main or nil)
