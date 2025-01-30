@@ -52,10 +52,12 @@ function M.new(opts)
   if self.opts.layout.position and self.opts.layout.position ~= "float" then
     local inner = self.opts.layout
     self.opts.layout = {
+      zindex = inner.zindex or 30,
       box = "vertical",
       position = inner.position,
       width = inner.width,
       height = inner.height,
+      backdrop = inner.backdrop,
       inner,
     }
     inner.width, inner.height, inner.col, inner.row, inner.position = 0, 0, 0, 0, nil
@@ -71,9 +73,18 @@ function M.new(opts)
       local has_border = box.border and box.border ~= "" and box.border ~= "none"
       local is_root = box.id == 1
       if is_root or has_border then
-        local backdrop = false ---@type boolean?
-        if is_root then
-          backdrop = nil
+        local backdrop = box.backdrop
+        if backdrop == nil then
+          backdrop = 60
+        end
+        if is_root and backdrop then
+          backdrop = type(backdrop) == "number" and { blend = backdrop } or backdrop
+          backdrop = backdrop == true and {} or backdrop
+          ---@cast backdrop snacks.win.Backdrop
+          backdrop.win = backdrop.win or {}
+          backdrop.win.zindex = 20
+        else
+          backdrop = false
         end
         self.box_wins[box.id] = Snacks.win(Snacks.win.resolve(box, {
           relative = is_root and (box.relative or "editor") or "win",
