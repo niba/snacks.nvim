@@ -82,6 +82,11 @@ function M.get(opts)
   elseif opts.cwd then
     opts.cwd = vim.fs.normalize(vim.fn.fnamemodify(opts.cwd, ":p"))
   end
+  for _, t in ipairs(todo) do
+    if t.config then
+      opts = t.config(opts) or opts
+    end
+  end
   M.multi(opts)
   return opts
 end

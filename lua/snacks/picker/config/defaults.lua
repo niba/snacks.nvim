@@ -98,6 +98,7 @@ local M = {}
 ---@field on_show? fun(picker:snacks.Picker) called when the picker is shown
 ---@field jump? snacks.picker.jump.Config|{}
 --- Other
+---@field config? fun(opts:snacks.picker.Config):snacks.picker.Config? custom config function
 ---@field debug? snacks.picker.debug|{}
 local defaults = {
   prompt = " ",
