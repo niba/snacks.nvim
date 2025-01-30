@@ -97,7 +97,7 @@ function M.file(item, picker)
   end
 
   if item.parent then
-    vim.list_extend(ret, M.indent(item, picker))
+    vim.list_extend(ret, M.tree(item, picker))
   end
 
   vim.list_extend(ret, M.filename(item, picker))
@@ -190,22 +190,22 @@ function M.git_stash(item, picker)
   return ret
 end
 
-function M.indent(item, picker)
+function M.tree(item, picker)
   local ret = {} ---@type snacks.picker.Highlight[]
-  local indents = picker.opts.icons.indent
+  local icons = picker.opts.icons.tree
   local indent = {} ---@type string[]
   local node = item
   while node and node.parent do
     local is_last, icon = node.last, ""
     if node ~= item then
-      icon = is_last and "  " or indents.vertical
+      icon = is_last and "  " or icons.vertical
     else
-      icon = is_last and indents.last or indents.middle
+      icon = is_last and icons.last or icons.middle
     end
     table.insert(indent, 1, icon)
     node = node.parent
   end
-  ret[#ret + 1] = { table.concat(indent), "SnacksPickerIndent" }
+  ret[#ret + 1] = { table.concat(indent), "SnacksPickerTree" }
   return ret
 end
 
@@ -218,7 +218,7 @@ function M.undo(item, picker)
   else
     ret[#ret + 1] = { a("", 2) }
   end
-  vim.list_extend(ret, M.indent(item, picker))
+  vim.list_extend(ret, M.tree(item, picker))
 
   ret[#ret + 1] = { a(tostring(entry.seq), 4), "SnacksPickerIdx" }
   ret[#ret + 1] = { " " }
@@ -241,8 +241,8 @@ end
 function M.lsp_symbol(item, picker)
   local opts = picker.opts --[[@as snacks.picker.lsp.symbols.Config]]
   local ret = {} ---@type snacks.picker.Highlight[]
-  if item.hierarchy and not opts.workspace then
-    vim.list_extend(ret, M.indent(item, picker))
+  if item.tree and not opts.workspace then
+    vim.list_extend(ret, M.tree(item, picker))
   end
   local kind = item.kind or "Unknown" ---@type string
   local kind_hl = "SnacksPickerIcon" .. kind

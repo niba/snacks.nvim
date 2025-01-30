@@ -283,7 +283,7 @@ local defaults = {
     keymaps = {
       nowait = "󰓅 "
     },
-    indent = {
+    tree = {
       vertical    = "│ ",
       middle = "├╴",
       last   = "└╴",

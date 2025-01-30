@@ -29,7 +29,7 @@ Snacks.util.set_hl({
   Unselected = "NonText",
   Idx = "Number",
   Bold = "Bold",
-  Indent = "LineNr",
+  Tree = "LineNr",
   Italic = "Italic",
   Code = "@markup.raw.markdown_inline",
   AuPattern = "String",

@@ -417,13 +417,13 @@ M.lsp_references = {
 
 -- LSP document symbols
 ---@class snacks.picker.lsp.symbols.Config: snacks.picker.Config
----@field hierarchy? boolean show symbol hierarchy
+---@field tree? boolean show symbol tree
 ---@field filter table<string, string[]|boolean>? symbol kind filter
 ---@field workspace? boolean show workspace symbols
 M.lsp_symbols = {
   finder = "lsp_symbols",
   format = "lsp_symbol",
-  hierarchy = true,
+  tree = true,
   filter = {
     default = {
       "Class",
@@ -465,7 +465,7 @@ M.lsp_symbols = {
 ---@type snacks.picker.lsp.symbols.Config
 M.lsp_workspace_symbols = vim.tbl_extend("force", {}, M.lsp_symbols, {
   workspace = true,
-  hierarchy = false,
+  tree = false,
   supports_live = true,
   live = true, -- live by default
 })

@@ -369,7 +369,7 @@ function M.symbols(opts, ctx)
         end,
       })
       for _, item in ipairs(items) do
-        item.hierarchy = opts.hierarchy
+        item.tree = opts.tree
         ---@diagnostic disable-next-line: await-in-sync
         cb(item)
       end
