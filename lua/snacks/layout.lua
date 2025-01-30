@@ -132,7 +132,9 @@ function M.new(opts)
     local sp = vim.fn.screenpos(self.root.win, 1, 1)
     if not vim.deep_equal(sp, self.screenpos) then
       self.screenpos = sp
-      self:update()
+      return self:update()
+    elseif vim.tbl_contains(vim.v.event.windows, self.root.win) then
+      return self:update()
     end
   end)
 
@@ -376,6 +378,15 @@ end
 ---@param parent snacks.win.Dim
 ---@private
 function M:dim_box(widget, parent)
+  -- honor the actual window size for split layouts
+  if not self.opts.fullscreen and widget.id == 1 and self.split and self.root:valid() then
+    return {
+      height = vim.api.nvim_win_get_height(self.root.win),
+      width = vim.api.nvim_win_get_width(self.root.win),
+      col = 0,
+      row = 0,
+    }, { left = 0, right = 0, top = 0, bottom = 0 }
+  end
   local opts = vim.deepcopy(widget) --[[@as snacks.win.Config]]
   -- adjust max width / height
   opts.max_width = math.min(parent.width, opts.max_width or parent.width)
