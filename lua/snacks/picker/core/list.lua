@@ -14,6 +14,7 @@
 ---@field selected snacks.picker.Item[]
 ---@field selected_map table<string, snacks.picker.Item>
 ---@field matcher snacks.picker.Matcher matcher for formatting list items
+---@field target? {cursor: number, top?: number}
 local M = {}
 M.__index = M
 
@@ -92,12 +93,26 @@ function M.new(picker)
 end
 
 ---@param cursor number
----@param topline? number
-function M:view(cursor, topline)
-  if topline then
-    self:scroll(topline, true, false)
+---@param top? number
+---@param render? boolean
+function M:view(cursor, top, render)
+  if top then
+    self:scroll(top, true, false)
   end
-  self:move(cursor, true)
+  self:move(cursor, true, render)
+  if self.cursor < cursor then
+    self.target = { cursor = cursor, top = top }
+  else
+    self.target = nil
+  end
+end
+
+--- Sets the target cursor/top for the next render.
+--- Useful to keep the cursor/top, right before triggering a `find`.
+---@param cursor? number
+---@param top? number
+function M:set_target(cursor, top)
+  self.target = { cursor = cursor or self.cursor, top = top or self.top }
 end
 
 ---@param idx number
@@ -125,6 +140,7 @@ function M:on_show()
   self.state.mousescroll = tonumber(vim.o.mousescroll:match("ver:(%d+)")) or 1
   Snacks.util.wo(self.win.win, { scrolloff = 0 })
   self.dirty = true
+  self:update_cursorline()
 end
 
 function M:count()
@@ -443,7 +459,14 @@ function M:update_cursorline()
 end
 
 function M:render()
-  self:move(0, false, false)
+  if self.target then
+    self:view(self.target.cursor, self.target.top, false)
+    if not self.picker:is_active() then
+      self.target = nil
+    end
+  else
+    self:move(0, false, false)
+  end
 
   local redraw = false
   if self.dirty then
