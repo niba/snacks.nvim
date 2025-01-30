@@ -104,9 +104,21 @@ end
 M.cancel = "close"
 M.edit = M.jump
 M.confirm = M.jump
-M.edit_split = { action = "jump", cmd = "split" }
-M.edit_vsplit = { action = "jump", cmd = "vsplit" }
-M.edit_tab = { action = "jump", cmd = "tabnew" }
+M.edit_split = { "split", "confirm" }
+M.edit_vsplit = { "vsplit", "confirm" }
+M.edit_tab = { "tab", "confirm" }
+
+function M.split()
+  vim.cmd("split")
+end
+
+function M.vsplit()
+  vim.cmd("vsplit")
+end
+
+function M.tab()
+  vim.cmd("tabnew")
+end
 
 function M.toggle_maximize(picker)
   picker.layout:maximize()
@@ -361,6 +373,7 @@ function M.load_session(picker)
 end
 
 function M.help(picker)
+  dd("help")
   local item = picker:current()
   if item then
     picker:close()
@@ -453,6 +466,7 @@ end
 function M.toggle_hidden(picker)
   local opts = picker.opts --[[@as snacks.picker.files.Config]]
   opts.hidden = not opts.hidden
+  picker.list:set_target()
   picker:find()
 end
 
