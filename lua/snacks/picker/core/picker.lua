@@ -70,14 +70,16 @@ function M.new(opts)
     end,
   })
 
-  local picker_count = vim.tbl_count(M._pickers)
+  local picker_count = vim.tbl_count(M._pickers) - vim.tbl_count(M._active)
   if picker_count > 0 then
     -- clear items from previous pickers for garbage collection
     for picker, _ in pairs(M._pickers) do
-      picker.finder.items = {}
-      picker.list.items = {}
-      picker.list:clear()
-      picker.list.picker = nil
+      if not M._active[picker] then
+        picker.finder.items = {}
+        picker.list.items = {}
+        picker.list:clear()
+        picker.list.picker = nil
+      end
     end
   end
 
