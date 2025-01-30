@@ -281,7 +281,7 @@ function M.results_to_items(client, results, opts)
     local loc = result.location or { range = result.selectionRange or result.range, uri = uri }
     loc.uri = loc.uri or uri
     M.add_loc(item, loc, client)
-    local text = table.concat({ M.symbol_kind(result.kind), result.name, result.detail or "" }, " ")
+    local text = table.concat({ M.symbol_kind(result.kind), result.name }, " ")
     if opts.text_with_file and item.file then
       text = text .. " " .. item.file
     end
