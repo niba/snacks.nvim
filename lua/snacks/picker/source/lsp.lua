@@ -272,7 +272,6 @@ function M.results_to_items(client, results, opts)
     local item = {
       kind = M.symbol_kind(result.kind),
       parent = parent,
-      depth = (parent.depth or 0) + 1,
       detail = result.detail,
       name = result.name,
       text = "",
@@ -299,7 +298,7 @@ function M.results_to_items(client, results, opts)
     result.children = nil
   end
 
-  local root = { depth = 0, text = "" } ---@type snacks.picker.finder.Item
+  local root = { text = "" } ---@type snacks.picker.finder.Item
   ---@type snacks.picker.finder.Item
   for _, result in ipairs(results) do
     add(result, root)

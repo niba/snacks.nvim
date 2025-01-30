@@ -96,6 +96,10 @@ function M.file(item, picker)
     vim.list_extend(ret, M.severity(item, picker))
   end
 
+  if item.parent then
+    vim.list_extend(ret, M.indent(item, picker))
+  end
+
   vim.list_extend(ret, M.filename(item, picker))
 
   if item.comment then
@@ -191,7 +195,7 @@ function M.indent(item, picker)
   local indents = picker.opts.icons.indent
   local indent = {} ---@type string[]
   local node = item
-  while node and node.depth > 0 do
+  while node and node.parent do
     local is_last, icon = node.last, ""
     if node ~= item then
       icon = is_last and "  " or indents.vertical
