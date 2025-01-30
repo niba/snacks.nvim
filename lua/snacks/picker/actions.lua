@@ -448,12 +448,6 @@ function M.focus_preview(picker)
   picker.preview.win:focus()
 end
 
-function M.toggle_ignored(picker)
-  local opts = picker.opts --[[@as snacks.picker.files.Config]]
-  opts.ignored = not opts.ignored
-  picker:find()
-end
-
 function M.item_action(picker, item, action)
   if item.action then
     picker:norm(function()
@@ -461,19 +455,6 @@ function M.item_action(picker, item, action)
       item.action(picker, item, action)
     end)
   end
-end
-
-function M.toggle_hidden(picker)
-  local opts = picker.opts --[[@as snacks.picker.files.Config]]
-  opts.hidden = not opts.hidden
-  picker.list:set_target()
-  picker:find()
-end
-
-function M.toggle_follow(picker)
-  local opts = picker.opts --[[@as snacks.picker.files.Config]]
-  opts.follow = not opts.follow
-  picker:find()
 end
 
 function M.list_top(picker)

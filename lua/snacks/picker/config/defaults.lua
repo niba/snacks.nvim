@@ -8,6 +8,7 @@ local M = {}
 ---@alias snacks.picker.sort fun(a:snacks.picker.Item, b:snacks.picker.Item):boolean
 ---@alias snacks.picker.transform fun(item:snacks.picker.finder.Item, ctx:snacks.picker.finder.ctx):(boolean|snacks.picker.finder.Item|nil)
 ---@alias snacks.picker.Pos {[1]:number, [2]:number}
+---@alias snacks.picker.toggle {icon?:string, enabled?:boolean, value?:boolean}
 
 --- Generic filter used by finders to pre-filter items
 ---@class snacks.picker.filter.Config
@@ -166,6 +167,14 @@ local defaults = {
     tagstack = false, -- save the current position in the tagstack
     reuse_win = false, -- reuse an existing window if the buffer is already open
   },
+  ---@type table<string, string|false|snacks.picker.toggle>
+  toggles = {
+    follow = "f",
+    hidden = "h",
+    ignored = "i",
+    modified = "m",
+    regex = { icon = "R", value = false },
+  },
   win = {
     -- input window
     input = {
@@ -244,6 +253,8 @@ local defaults = {
         ["<ScrollWheelDown>"] = "list_scroll_wheel_down",
         ["<ScrollWheelUp>"] = "list_scroll_wheel_up",
         ["<c-a>"] = "select_all",
+        ["<a-m>"] = { "toggle_maximize" },
+        ["<a-p>"] = { "toggle_preview" },
         ["<c-f>"] = "preview_scroll_down",
         ["<c-b>"] = "preview_scroll_up",
         ["<c-l>"] = "preview_scroll_right",
@@ -256,6 +267,9 @@ local defaults = {
         ["<c-p>"] = "list_up",
         ["<a-w>"] = "cycle_win",
         ["<Esc>"] = "close",
+        ["<a-i>"] = "toggle_ignored",
+        ["<a-h>"] = "toggle_hidden",
+        ["<a-f>"] = "toggle_follow",
       },
       wo = {
         conceallevel = 2,

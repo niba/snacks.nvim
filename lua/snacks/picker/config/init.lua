@@ -87,6 +87,21 @@ function M.get(opts)
       opts = t.config(opts) or opts
     end
   end
+
+  -- add hl groups and actions for toggles
+  opts.actions = opts.actions or {}
+  for name in pairs(opts.toggles) do
+    local hl = table.concat(vim.tbl_map(function(a)
+      return a:sub(1, 1):upper() .. a:sub(2)
+    end, vim.split(name, "_")))
+    Snacks.util.set_hl({ [hl] = "SnacksPickerToggle" }, { default = true, prefix = "SnacksPickerToggle" })
+    opts.actions["toggle_" .. name] = function(picker)
+      picker.opts[name] = not picker.opts[name]
+      picker.list:set_target()
+      picker:find()
+    end
+  end
+
   M.multi(opts)
   return opts
 end

@@ -16,6 +16,7 @@ M.autocmds = {
 ---@field unloaded? boolean show loaded buffers
 ---@field current? boolean show current buffer
 ---@field nofile? boolean show `buftype=nofile` buffers
+---@field modified? boolean show only modified buffers
 ---@field sort_lastused? boolean sort by last used
 ---@field filter? snacks.picker.filter.Config
 M.buffers = {
@@ -232,6 +233,7 @@ M.git_diff = {
 ---@field rtp? boolean search in runtimepath
 M.grep = {
   finder = "grep",
+  regex = true,
   format = "file",
   live = true, -- live grep by default
   supports_live = true,

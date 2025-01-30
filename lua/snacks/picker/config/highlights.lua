@@ -12,10 +12,7 @@ Snacks.util.set_hl({
   File = "", -- basename of a file path
   Directory = "Directory", -- basename of a directory path
   Dir = "NonText", -- dirname of a path
-  Flag = "DiagnosticVirtualTextInfo",
-  FlagHidden = "SnacksPickerFlag",
-  FlagIgnored = "SnacksPickerFlag",
-  FlagFollow = "SnacksPickerFlag",
+  Toggle = "DiagnosticVirtualTextInfo",
   Dimmed = "Conceal",
   Row = "String",
   Col = "LineNr",

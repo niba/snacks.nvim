@@ -355,19 +355,25 @@ function M:update_titles()
     live = self.opts.live and self.opts.icons.ui.live or "",
     preview = vim.trim(self.preview.title or ""),
   }
-  local opts = self.opts --[[@as snacks.picker.files.Config]]
-  local flags = {} ---@type snacks.picker.Text[]
-  if opts.follow then
-    flags[#flags + 1] = { " " .. self.opts.icons.ui.follow .. " ", "SnacksPickerFlagFollow" }
-    flags[#flags + 1] = { " ", "FloatTitle" }
-  end
-  if opts.hidden then
-    flags[#flags + 1] = { " " .. self.opts.icons.ui.hidden .. " ", "SnacksPickerFlagHidden" }
-    flags[#flags + 1] = { " ", "FloatTitle" }
-  end
-  if opts.ignored then
-    flags[#flags + 1] = { " " .. self.opts.icons.ui.ignored .. " ", "SnacksPickerFlagIgnored" }
-    flags[#flags + 1] = { " ", "FloatTitle" }
+  local toggles = {} ---@type snacks.picker.Text[]
+  for name, toggle in pairs(self.opts.toggles) do
+    if toggle then
+      toggle = type(toggle) == "string" and { icon = toggle } or toggle
+      toggle = toggle == true and { icon = name:sub(1, 1) } or toggle
+      toggle = toggle == false and { enabled = false } or toggle
+      local want = toggle.value
+      if toggle.value == nil then
+        want = true
+      end
+      ---@cast toggle snacks.picker.toggle
+      if toggle.enabled ~= false and self.opts[name] == want then
+        local hl = table.concat(vim.tbl_map(function(a)
+          return a:sub(1, 1):upper() .. a:sub(2)
+        end, vim.split(name, "_")))
+        toggles[#toggles + 1] = { " " .. toggle.icon .. " ", "SnacksPickerToggle" .. hl }
+        toggles[#toggles + 1] = { " ", "FloatTitle" }
+      end
+    end
   end
   local wins = { self.layout.root }
   vim.list_extend(wins, vim.tbl_values(self.layout.wins))
@@ -380,7 +386,7 @@ function M:update_titles()
       local title = Snacks.picker.util.tpl(tpl, data)
       if title:find("{flags}", 1, true) then
         title = title:gsub("{flags}", "")
-        vim.list_extend(ret, flags)
+        vim.list_extend(ret, toggles)
       end
       title = vim.trim(title):gsub("%s+", " ")
       if title ~= "" then
