@@ -461,14 +461,14 @@ end
 
 --- Returns an iterator over the filtered items in the picker.
 --- Items will be in sorted order.
----@return fun():snacks.picker.Item?
+---@return fun():(snacks.picker.Item?, number?)
 function M:iter()
   local i = 0
   local n = self.list:count()
   return function()
     i = i + 1
     if i <= n then
-      return self:resolve(self.list:get(i))
+      return self:resolve(self.list:get(i)), i
     end
   end
 end
