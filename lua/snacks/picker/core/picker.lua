@@ -254,6 +254,7 @@ function M:init_layout(layout)
       self:update_titles()
       self:show_preview()
       self.input:update()
+      self.list:update_cursorline()
     end,
     layout = {
       backdrop = backdrop,
