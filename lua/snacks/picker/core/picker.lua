@@ -436,7 +436,11 @@ function M:show()
   if self.preview.main then
     self.preview.win:show()
   end
-  self.input.win:focus()
+  if self.opts.focus == "input" then
+    self.input.win:focus()
+  elseif self.opts.focus == "list" then
+    self.list.win:focus()
+  end
   if self.opts.on_show then
     self.opts.on_show(self)
   end

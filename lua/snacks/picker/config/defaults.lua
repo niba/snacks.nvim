@@ -83,6 +83,7 @@ local M = {}
 ---@field prompt? string prompt text / icon
 ---@field title? string defaults to a capitalized source name
 ---@field auto_close? boolean automatically close the picker when focusing another window (defaults to true)
+---@field focus? "input"|"list"|false where to focus when the picker is opened (defaults to "input")
 --- Preset options
 ---@field previewers? snacks.picker.previewers.Config|{}
 ---@field formatters? snacks.picker.formatters.Config|{}
@@ -101,6 +102,7 @@ local M = {}
 local defaults = {
   prompt = " ",
   sources = {},
+  focus = "input",
   layout = {
     cycle = true,
     --- Use the default layout or vertical if the window is too narrow
