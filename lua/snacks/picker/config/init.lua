@@ -77,8 +77,10 @@ function M.get(opts)
 
   -- Merge the configs
   opts = Snacks.config.merge(unpack(todo))
-  if opts.cwd == true then
+  if opts.cwd == true or opts.cwd == "" then
     opts.cwd = nil
+  elseif opts.cwd then
+    opts.cwd = vim.fs.normalize(vim.fn.fnamemodify(opts.cwd, ":p"))
   end
   M.multi(opts)
   return opts
