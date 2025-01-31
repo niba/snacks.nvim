@@ -155,6 +155,8 @@ function M.new(opts)
   local sort = self.opts.sort or require("snacks.picker.sort").default()
   sort = type(sort) == "table" and require("snacks.picker.sort").default(sort) or sort
   ---@cast sort snacks.picker.sort
+  ---
+  sort = self.opts.sorter and self.opts.sorter(self.opts, self.opts.sort and self.opts.sort.fields) or sort
   self.sort = sort
 
   self.updater = assert(uv.new_timer())

@@ -158,6 +158,7 @@ function M.files(opts, ctx)
       transform = function(item)
         item.cwd = cwd
         item.file = item.text
+        item.filename = (vim.fn.fnamemodify(item.text, ":t"))
       end,
     },
   }, ctx)
@@ -174,6 +175,7 @@ function M.zoxide(opts, ctx)
       ---@param item snacks.picker.finder.Item
       transform = function(item)
         item.file = item.text
+        item.filename = (vim.fn.fnamemodify(item.text, ":t"))
       end,
     },
   }, ctx)
