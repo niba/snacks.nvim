@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.17.1](https://github.com/folke/snacks.nvim/compare/v2.17.0...v2.17.1) (2025-01-31)
+
+
+### Bug Fixes
+
+* **picker.format:** use item.file for filename_only ([e784a9e](https://github.com/folke/snacks.nvim/commit/e784a9e6723371f8f453a92edb03d68428da74cc))
+* **picker.keymaps:** added normalized lhs to search text ([fbd39a4](https://github.com/folke/snacks.nvim/commit/fbd39a48df085a7df979a06b1003faf86625c157))
+* **picker.lazy:** don't use live searches. Fixes [#809](https://github.com/folke/snacks.nvim/issues/809) ([1a5fd93](https://github.com/folke/snacks.nvim/commit/1a5fd93b89904b8f8029e6ee74e6d6ada87f28c5))
+* **picker.lines:** col is first non-whitespace. Closes [#806](https://github.com/folke/snacks.nvim/issues/806) ([ec8eb60](https://github.com/folke/snacks.nvim/commit/ec8eb6051530261e7d0e5566721e5c396c1ed6cd))
+* **picker:** no auto-close when entering a floating window ([08e6c12](https://github.com/folke/snacks.nvim/commit/08e6c12358d57dfb497f8ce7de7eb09134868dc7))
+* **picker:** no need to track jumping ([b37ea74](https://github.com/folke/snacks.nvim/commit/b37ea748b6ff56cd479600b1c39d19a308ee7eae))
+* **picker:** show_empty for files / grep. Closes [#808](https://github.com/folke/snacks.nvim/issues/808) ([a13ff6f](https://github.com/folke/snacks.nvim/commit/a13ff6fe0f68c3242d6be5e352d762b6037a9695))
+
+
+### Performance Improvements
+
+* **git:** also check top-level path to see if it's a git root. Closes [#807](https://github.com/folke/snacks.nvim/issues/807) ([b9e7c51](https://github.com/folke/snacks.nvim/commit/b9e7c51e8f7eea876275e52f1083b58f9d2df92f))
+
 ## [2.17.0](https://github.com/folke/snacks.nvim/compare/v2.16.0...v2.17.0) (2025-01-30)
 
 
