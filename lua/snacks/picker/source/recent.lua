@@ -45,7 +45,7 @@ function M.files(opts, ctx)
   return function(cb)
     for file in oldfiles(ctx.filter, extra) do
       if file ~= current_file then
-        cb({ file = file, text = file, recent = true })
+        cb({ file = file, filename = (vim.fn.fnamemodify(file, ":t")), text = file, recent = true })
       end
     end
   end

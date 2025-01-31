@@ -195,9 +195,11 @@ end
 
 ---@param opts snacks.picker.Config
 function M.sort(opts)
-  local sort = opts.sort or require("snacks.picker.sort").default()
+ local sort = opts.sort or require("snacks.picker.sort").default()
   sort = type(sort) == "table" and require("snacks.picker.sort").default(sort) or sort
   ---@cast sort snacks.picker.sort
+  ---
+  sort = opts.sorter and opts.sorter(opts, opts.sort and opts.sort.fields) or sort
   return sort
 end
 

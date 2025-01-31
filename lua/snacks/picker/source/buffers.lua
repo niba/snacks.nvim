@@ -37,6 +37,7 @@ function M.buffers(opts, ctx)
         buf = buf,
         text = buf .. " " .. name,
         file = name,
+        filename = (vim.fn.fnamemodify(name, ":t")),
         info = info,
         pos = mark[1] ~= 0 and mark or { info.lnum, 0 },
       })
